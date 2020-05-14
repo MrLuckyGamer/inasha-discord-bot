@@ -4,7 +4,7 @@ const discord = require("discord.js")
 module.exports.run = async (bot, message, args) => {
     
     //OWNER ONLY COMMAND
-    if(!message.author.id === "694585818383122472 , 537697699323969536") {
+    if(!message.author.id === "694585818383122472") {
       return message.channel.send("This command can only be used by owner")
     }
     //ARGUMENT
