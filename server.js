@@ -214,7 +214,7 @@ client.on("guildMemberAdd", async member => {
         }
     })
 
-client.login('NzA5NjY4NDQxNzQ0OTk4NDcy.XrpQTQ.AJNrR9BxKWR3xUmrRoUDoEbPNEM')
+client.login('NzEwNDg5NDg4NDkyODU1Mzg4.Xr1NDg.564PoZFHgpgNsqvOwk5o8zuoGUE')
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -1055,4 +1055,4 @@ function play(guild, song) {
   
   //ENDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
 
-client.login('NzA5NjY4NDQxNzQ0OTk4NDcy.XrpQTQ.AJNrR9BxKWR3xUmrRoUDoEbPNEM')
+client.login('NzEwNDg5NDg4NDkyODU1Mzg4.Xr1NDg.564PoZFHgpgNsqvOwk5o8zuoGUE')
