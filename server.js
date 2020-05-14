@@ -1,7 +1,7 @@
 
 const Discord = require ("discord.js");
 const client = new Discord.Client();
-const prefix = "y!"
+const prefix = "t>"
 const db = require("quick.db");
 const fs = require("fs")
 const express = require("express");
@@ -214,7 +214,7 @@ client.on("guildMemberAdd", async member => {
         }
     })
 
-client.login('NzEwNDg5NDg4NDkyODU1Mzg4.Xr1NDg.564PoZFHgpgNsqvOwk5o8zuoGUE')
+client.login('NzEwNDk1MTg2ODExMjI0MTU0.Xr1SOw.exD6qeLyyLA0MdKZC2oEakc9nCs')
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -1055,4 +1055,4 @@ function play(guild, song) {
   
   //ENDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
 
-client.login('NzEwNDg5NDg4NDkyODU1Mzg4.Xr1NDg.564PoZFHgpgNsqvOwk5o8zuoGUE')
+client.login('NzEwNDk1MTg2ODExMjI0MTU0.Xr1SOw.exD6qeLyyLA0MdKZC2oEakc9nCs')
