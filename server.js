@@ -1,12 +1,13 @@
 
 const Discord = require ("discord.js");
 const client = new Discord.Client();
-const prefix = "t>"
+const prefix = ">"
 const db = require("quick.db");
 const fs = require("fs")
 const express = require("express");
 const http = require("http");
 const app = express();
+const token = require("./config.json")
 client.on("ready", () => { //When bot is ready
   console.log("I am Reday to Go")
   client.user.setActivity(db.get(`status`)) //It will set status :)
@@ -51,7 +52,6 @@ client.on("message", (message) => {
 	)
 		.catch(error => console.log(error))
 		.then(channel=>{
-			deleteEmptyChannelAfterDelay(channel);
 			channel.setParent(config[0].category)
 				.catch(error => console.log(error))
 				.finally(function(){	//move channel in voice category
@@ -214,7 +214,7 @@ client.on("guildMemberAdd", async member => {
         }
     })
 
-client.login('NzEwNDk1MTg2ODExMjI0MTU0.Xr1SOw.exD6qeLyyLA0MdKZC2oEakc9nCs')
+client.login('Njk4NTk5Mzc2ODAwNzEwNjU2.Xujvlg.TO0coRAwl5iuLptf5ePxUpbrPyM')
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -1055,4 +1055,4 @@ function play(guild, song) {
   
   //ENDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
 
-client.login('NzEwNDk1MTg2ODExMjI0MTU0.Xr1SOw.exD6qeLyyLA0MdKZC2oEakc9nCs')
+client.login('Njk4NTk5Mzc2ODAwNzEwNjU2.Xujvlg.TO0coRAwl5iuLptf5ePxUpbrPyM')
