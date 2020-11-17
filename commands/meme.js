@@ -9,6 +9,7 @@ module.exports = {
         description: "Get a meme from the dankmemes subreddit",
         permissions: "none"
     },
+
     run: async (bot, message, args) => {
         let reddit = [
             "dankmemes"
@@ -29,7 +30,8 @@ module.exports = {
         });
     }
 }
+
 module.exports.help = {
   name:"meme",
-  aliases: [""]
+  aliases: []
 }

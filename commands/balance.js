@@ -1,21 +1,17 @@
 const Discord = require("discord.js");
-const db = require("quick.db");
 
 module.exports.run = async (bot, message, args, utils) => {
-  if(!message.content.startsWith('m!'))return;  
-
   let user = message.mentions.members.first() || message.author;
+  let bal = bot.db.fetch(`money_${message.guild.id}_${user.id}`)
+  if (bal === undefined) { bal = 0; }
 
-  let bal = db.fetch(`money_${message.guild.id}_${user.id}`)
+  let bank = await bot.db.fetch(`bank_${message.guild.id}_${user.id}`)
+  if (bank === undefined) { bank = 0; }
 
-  if (bal === null) bal = 0;
-
-  let bank = await db.fetch(`bank_${message.guild.id}_${user.id}`)
-  if (bank === null) bank = 0;
-
-  let moneyEmbed = new Discord.RichEmbed()
+  let moneyEmbed = new Discord.MessageEmbed()
   .setColor("#FFFFFF")
   .setDescription(`**${user}'s Balance**\n\nPocket: ${bal}\nBank: ${bank}`);
+
   message.channel.send(moneyEmbed)
 };
 

@@ -1,18 +1,17 @@
 const Discord = require('discord.js');
 exports.run = (client, message, args) => {
-    let reason = args.slice(1).join(' ');
     let user = args[0]
-    if (reason.length < 1) return message.reply('you must supply a reason to unban the mentioned user.');
-    if (!user) return message.reply('you must supply a `UserResolvable`, i.e. a user ID.').catch(console.error);
-    message.guild.unban(user);
+    if (!user) { return message.reply('you must supply a `UserResolvable`, i.e. a user ID.').catch(console.error); }
+    message.guild.members.unban(user);
     
-    const embed = new Discord.RichEmbed()
+    const embed = new Discord.MessageEmbed()
     .setColor(0x00AE86)
     .setTimestamp()
     .addField('Action:', 'Unban')
     .addField('Target:', `${user.username}#${user.discriminator} [ID: ${user.id}]`)
     .addField('Responsible moderator:', `${message.author.username}#${message.author.discriminator}`);
-   message.channel.send('The user has been unbanned!')
+
+    message.channel.send("", embed)
 };
 
 exports.conf = {
@@ -30,5 +29,5 @@ exports.help = {
 
 module.exports.help = {
   name:"unban",
-  aliases: [""]
+  aliases: []
 }

@@ -2,17 +2,18 @@ const hug = ["https://s-media-cache-ak0.pinimg.com/originals/49/a2/1e/49a21e182f
 const rn = require('random-number')
 
 module.exports.run = async (bot, message, args) => {
-    if (!message.mentions.users.first()) return message.channel.send("Well you can't hug the air...");
+    if (!message.mentions.users.first()) { return message.channel.send("Well you can't hug the air..."); }
     let r = rn({
         min: 0,
         max: hug.length - 1,
         integer: true
     });
     let image = hug[r];
+
     message.channel.send('**' + message.author.username + '** *sends a hug to* **' + message.mentions.users.first().username + '** :heart:\n' + image);
 }
 
 module.exports.help = {
-    name: "mock",
-  aliases:[""]
+  name: "hug",
+  aliases: []
 }

@@ -1,12 +1,11 @@
 
 module.exports.run = async (bot, message, args) => {
-
-if (message.mentions.members.filter(member => { member.id != bot.user.id }).array().length > 0)
-            message.channel.send(message.mentions.members.filter(member => { member.id != bot.user.id }).first() + ', ' + getInsult());
-        else
-            message.reply(getInsult());
+    if (message.mentions.members.filter(member => { member.id != bot.user.id }).array().length > 0) {
+        message.channel.send(message.mentions.members.filter(member => { member.id != bot.user.id }).first() + ', ' + getInsult());
+    } else {
+        message.reply(getInsult());
     }
-
+}
 
 const importedBuckets = {
     insults: [
@@ -470,5 +469,5 @@ const getInsult = (buckets = importedBuckets) =>
 
 module.exports.help = {
   name:"insult",
-  aliases: [""]
+  aliases: []
 }

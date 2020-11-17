@@ -2,7 +2,7 @@ const kill = ["https://imgur.com/gallery/IzMIQx1","https://imgur.com/gallery/fzj
 const rn = require('random-number')
 
 module.exports.run = async (bot, message, args) => {
-    if (!message.mentions.users.first()) return message.channel.send("Well you can't kill the air...");
+    if (!message.mentions.users.first()) { return message.channel.send("Well you can't kill the air..."); }
     let r = rn({
         min: 0,
         max: kill.length - 1,
@@ -13,6 +13,6 @@ module.exports.run = async (bot, message, args) => {
 }
 
 module.exports.help = {
-    name: "mock",
-  aliases:[""]
+  name: "kill",
+  aliases: []
 }

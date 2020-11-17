@@ -1,18 +1,16 @@
 const Discord = require('discord.js');
 
 module.exports.run = async (bot, message, args) => {
-  
-  let xdemb = new Discord.RichEmbed()
-        .setColor("RANDOM")
-        .setTitle("Moderation commands")
-        .addField("👊🏻", 'Ban, unban, kick, clear, say, addrole, removerole, mute, unmute, warn, lockdown, lockdown release, warns, serverstats, setwlc, setlogs.')                                                                                                                                                                                                                                                         
-        .addField("Support Server", "[Click to join support Server](https://discord.gg/qaEq3bh)")
+  let xdemb = new Discord.MessageEmbed()
+  .setColor("RANDOM")
+  .setTitle("Moderation Commands")
+  .addField("👊🏻", 'ban, unban, kick, clear, say, removerole, mute, unmute, lockdown, lockdown release, serverstats')                                                                                                                                                                                                                                                         
+  .addField("Support Server", "[Click to join support Server](https://discord.gg/zdDy8Vy)")
   
   message.channel.send(xdemb);
-  
-      }
-      module.exports.help = {
-        name: "help moderation",
-        aliases: [""]
-      }
-  
+}
+
+module.exports.help = {
+  name: "help-moderation",
+  aliases: []
+}

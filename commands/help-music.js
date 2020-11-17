@@ -1,18 +1,16 @@
 const Discord = require('discord.js');
 
 module.exports.run = async (bot, message, args) => {
-  
-  let xdemb = new Discord.RichEmbed()
-        .setColor("RANDOM")
-        .setTitle("Music commands")
-        .addField("🎵", 'play , stop , np (now play), queue , pause, resume.')
-        .addField("Support Server", "[Click to join support Server](https://discord.gg/qaEq3bh)")
+  let xdemb = new Discord.MessageEmbed()
+  .setColor("RANDOM")
+  .setTitle("Music Commands")
+  .addField("🎵", 'play , stop , np (now play), queue , pause, resume.')
+  .addField("Support Server", "[Click to join support Server](https://discord.gg/zdDy8Vy)")
   
   message.channel.send(xdemb);
-  
-      }
-      module.exports.help = {
-        name: "help",
-        aliases: [""]
-      }
-  
+}
+
+module.exports.help = {
+  name: "help-music",
+  aliases: []
+}
