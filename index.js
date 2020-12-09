@@ -47,7 +47,7 @@ bot.on("message", async message => {
   } else if(bot.aliases.has(command) && bot.commands.has(bot.aliases.get(command))) {
     bot.commands.get(bot.aliases.get(command)).run(bot, message, args);
   } else {
-    message.channel.send("Unknown Command");
+    message.channel.send("Unknown Command | i>help");
   }
 });
 
