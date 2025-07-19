@@ -4,7 +4,7 @@ module.exports.run = async (bot, message, args) => {
   let xdemb = new Discord.MessageEmbed()
   .setColor("RANDOM")
   .setTitle("NSFW Commands")
-  .addField("🔒", '4k, anal, ass, hentai, holo, pussy, thigh, boobs')
+  .addField("🔒", '4k, anal, ass, hentai, holo, pussy, thigh, boobs, fuck')
 
   message.channel.send(xdemb);
 }
