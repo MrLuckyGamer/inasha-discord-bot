@@ -1,40 +1,22 @@
-const Discord = require("discord.js")
+module.exports = {
+  name: "ban",
+  description: "Ban a user from the server.",
+  category: "Moderation",
+  async execute(message, args) {
+    if (!message.member.permissions.has("BanMembers"))
+      return message.reply("You don’t have permission to ban members.");
 
-module.exports.run = async (bot, message, args) => {
-   let xdemb = new Discord.MessageEmbed()
-   .setColor("#00ff00")
-   .setTitle("Ban Command")
-   .addField("Description:", `Ban a member`, true)
-   .addField("Usage:", `i>ban [user] [reason]`, true)
-   .addField("Example:", `i>ban @AlexD spam`)
+    const user = message.mentions.members.first();
+    if (!user) return message.reply("You must mention a user to ban.");
 
-   if(!message.member.hasPermission("BAN_MEMBERS") && message.author.id !== bot.config.ownerID) { return message.channel.send("Sorry you don't have permission to use this!"); }
+    const reason = args.slice(1).join(" ") || "No reason provided";
 
-   let member = message.mentions.members.first();
-   if(!member) { return message.channel.send(xdemb) }
-   if(!member.bannable) { return message.channel.send("I can't ban this user!") }
-   if(member.user.id === bot.config.ownerID) { return message.channel.send("I can't ban my owner!") }
-   if(member.id === message.author.id) { return message.channel.send("You can't ban your self") }
-
-   let reason = args.slice(1).join(" ");
-   if(reason === undefined) {
-      reason = "No reason given";
-   }
-
-   await member.ban({ reason: reason }).catch(error => message.channel.send(`Sorry, I couldn't ban because of: ${error}`));
-
-   let bean = new Discord.MessageEmbed()
-   .setColor("#00ff00")
-   .setTitle(`Ban | ${member.user.tag}`)
-   .addField("User", member, true)
-   .addField("Moderator", message.author, true)
-   .addField("Reason", reason)
-   .setTimestamp()
-
-   message.channel.send(bean)
-}
-
-module.exports.help = {
-  name:"ban",
-  aliases: ["b"]
-}
+    try {
+      await user.ban({ reason });
+      message.channel.send(`Banned **${user.user.tag}** | Reason: *${reason}*`);
+    } catch (err) {
+      console.error(err);
+      message.reply("I was unable to ban that user.");
+    }
+  },
+};

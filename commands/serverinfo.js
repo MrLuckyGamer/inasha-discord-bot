@@ -1,35 +1,26 @@
-const Discord = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 
-module.exports.run = async (bot, message, args) => {
-  const verlvl = {
-    0: "None",
-    1: "Low",
-    2: "Medium",
-    3: "(╯°□°）╯︵ ┻━┻",
-    4: "(ノಠ益ಠ)ノ彡┻━┻"
-  }
+module.exports = {
+  name: "serverinfo",
+  description: "Show server information.",
+  category: "Utility",
+  async execute(message) {
+    const guild = message.guild;
 
-  let inline = true
-  let sicon = message.guild.iconURL;
-  let serverembed = new Discord.MessageEmbed()
-  .setColor("#00ff00")
-  .setThumbnail(sicon)
-  .setAuthor(message.guild.name)
-  .addField("Name", message.guild.name, inline)
-  .addField("ID", message.guild.id, inline)
-  .addField("Owner", message.guild.owner, inline)
-  .addField("Region", message.guild.region, inline)
-  .addField("Verification Level", verlvl[message.guild.verificationLevel],inline)
-  .addField("Members", `${message.guild.memberCount}`, inline)
-  .addField("Roles", message.guild.roles.cache.size, inline)
-  .addField("Channels", message.guild.cache.channels.size, inline)
-  .addField("You Joined", message.member.joinedAt)
-  .setFooter(`Created ${message.guild.createdAt}`);
+    const embed = new EmbedBuilder()
+      .setTitle(`Server Info: ${guild.name}`)
+      .setThumbnail(guild.iconURL({ dynamic: true }))
+      .addFields(
+        { name: "Owner", value: `<@${guild.ownerId}>`, inline: true },
+        { name: "Members", value: `${guild.memberCount}`, inline: true },
+        { name: "Channels", value: `${guild.channels.cache.size}`, inline: true },
+        { name: "Roles", value: `${guild.roles.cache.size}`, inline: true },
+        { name: "Boosts", value: `${guild.premiumSubscriptionCount}`, inline: true },
+        { name: "Created On", value: `<t:${Math.floor(guild.createdTimestamp / 1000)}:D>`, inline: true }
+      )
+      .setColor(8388736)
+      .setTimestamp();
 
-  message.channel.send(serverembed);
-}
-
-module.exports.help = {
-  name:"serverinfo",
-  aliases: []
-}
+    message.channel.send({ embeds: [embed] });
+  },
+};

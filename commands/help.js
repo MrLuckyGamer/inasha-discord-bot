@@ -1,21 +1,29 @@
-const Discord = require('discord.js');
+const { EmbedBuilder } = require("discord.js");
+const config = require("../config.json");
 
-module.exports.run = async (bot, message, args) => {
-  let xdemb = new Discord.MessageEmbed()
-  .setColor("RANDOM")
-  .setTitle("Inasha Commands")
-  .addField("Moderation Commands", bot.config.prefix + 'help-moderation')                                                                                                                                                                                                                                                         
-  .addField("Fun Commands", bot.config.prefix + 'help-fun')                    
-  .addField("Utility Commands", bot.config.prefix + `help-utility`)
-  .addField("NSFW Commands", bot.config.prefix + 'help-nsfw')
-  .addField("Music", bot.config.prefix + 'help-music')
-  .addField("Economy", bot.config.prefix + "help-economy")
-  .addField("Support Server", "[Click to join support Server](https://discord.gg/zdDy8Vy)")
-  
-  message.channel.send(xdemb);
-}
-
-module.exports.help = {
+module.exports = {
   name: "help",
-  aliases: []
-}
+  description: "Show all commands grouped by category.",
+  category: "Utility",
+  async execute(message) {
+    const client = message.client;
+
+    const categories = {};
+    client.commands.forEach(cmd => {
+      const category = cmd.category || "Uncategorized";
+      if (!categories[category]) categories[category] = [];
+      categories[category].push(`\`${config.prefix}${cmd.name}\` - ${cmd.description}`);
+    });
+
+    const embed = new EmbedBuilder()
+      .setTitle("Help: List of Commands")
+      .setColor(8388736)
+      .setTimestamp();
+
+    for (const [category, cmds] of Object.entries(categories)) {
+      embed.addFields({ name: category, value: cmds.join("\n") });
+    }
+
+    message.channel.send({ embeds: [embed] });
+  },
+};

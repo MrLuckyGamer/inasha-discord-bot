@@ -1,54 +1,139 @@
-const Discord = require("discord.js");
-const bot = new Discord.Client({ disableEveryone: true });
-let Database = require('./db.js')
-const YouTube = require("simple-youtube-api");
+const { Client, GatewayIntentBits, Collection } = require("discord.js");
+const fs = require("fs");
+const path = require("path");
+const config = require("./config.json");
+const { updateStats } = require("./commands/serverstats.js");
 
-bot.fs = require("fs");
-bot.config = require("./config.json");
-bot.commands = new Discord.Collection();
-bot.aliases = new Discord.Collection();
-bot.db = new Database(bot);
-bot.db.load();
-bot.logging = require('./callbacks/logging.js')
-bot.logging.process(bot);
-bot.youtube = new YouTube(bot.config.yt_token);
-bot.ytdl = require("ytdl-core")
-bot.queue = new Map();
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers,
+  ],
+});
 
-bot.fs.readdir("./commands/", (err, files) => {
-  if(err) { console.log(err); }
-  let jsfile = files.filter(f => f.split(".").pop() === "js");
+client.commands = new Collection();
 
-  jsfile.forEach((f, i) =>{
-    let props = require(`./commands/${f}`);
-    bot.commands.set(props.help.name, props);
-    props.help.aliases.forEach(alias => { 
-      bot.aliases.set(alias, props.help.name);
-    });
+const commandsPath = path.join(__dirname, "commands");
+const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith(".js"));
+
+for (const file of commandFiles) {
+  const command = require(`./commands/${file}`);
+  client.commands.set(command.name, command);
+}
+
+client.on("guildMemberAdd", member => updateStats(member.guild));
+client.on("guildMemberRemove", member => updateStats(member.guild));
+client.on("channelCreate", channel => updateStats(channel.guild));
+client.on("channelDelete", channel => updateStats(channel.guild));
+
+client.once("clientReady", async () => {
+  let totalUsers = 0;
+  let totalChannels = 0;
+
+  for (const guild of client.guilds.cache.values()) {
+    await guild.members.fetch();
+
+    const members = guild.members.cache;
+    totalUsers += members.filter(m => !m.user.bot).size;
+
+    totalChannels += guild.channels.cache.size;
+  }
+
+  const guildCount = client.guilds.cache.size;
+
+  console.log("==========================");
+  console.log(`Logged in as ${client.user.tag}`);
+  console.log(`Serving in ${guildCount} servers`);
+  console.log(`Watching over ${totalUsers} users`);
+  console.log(`Monitoring ${totalChannels} channels`);
+  console.log("==========================");
+
+  client.user.setPresence({
+    status: 'online', // online, idle, dnd, invisible
+    activities: [
+      {
+        name: `${config.prefix}help`,
+        type: 1, // 0 = Playing, 1 = Streaming, 2 = Listening, 3 = Watching, 4 = Custom
+        url: 'https://twitch.tv/femboyyluckyy' // Only needed if type is 1 (Streaming)
+      }
+    ]
   });
-})
 
-bot.on("ready", async () => {
-  console.log(`${bot.user.username} is online on ${bot.guilds.cache.size} servers!`);
-  bot.user.setPresence({status: 'online', activity:{ name: `on ${bot.guilds.cache.size} Servers! │ i>help`, type: 0}});
-})
+  const statsFile = "./data/serverstats/serverstats.json";
+  if (fs.existsSync(statsFile)) {
+    const statsData = JSON.parse(fs.readFileSync(statsFile));
+    for (const guildId of Object.keys(statsData)) {
+      const guild = client.guilds.cache.get(guildId);
+      if (guild) await updateStats(guild);
+    }
+  }
 
-bot.on("message", async message => {
-  if (!message.content.startsWith(bot.config.prefix)) { return undefined; }
-  let command = message.content.toLowerCase().split(" ")[0];
-  command = command.slice(bot.config.prefix.length);
-  let args = message.content
-  .slice(bot.config.prefix.length + command.length)
-  .trim()
-  .split(" ");
+  setInterval(() => {
+    client.guilds.cache.forEach(guild => updateStats(guild));
+  }, 10 * 60 * 1000);
+});
 
-  if(bot.commands.has(command)) {
-    bot.commands.get(command).run(bot, message, args);
-  } else if(bot.aliases.has(command) && bot.commands.has(bot.aliases.get(command))) {
-    bot.commands.get(bot.aliases.get(command)).run(bot, message, args);
-  } else {
-    message.channel.send("Unknown Command | i>help");
+client.on("messageCreate", async (message) => {
+  if (message.author.bot) return;
+
+  const content = message.content.toLowerCase();
+  const prefix = config.prefix.toLowerCase();
+
+  if (!content.startsWith(prefix)) return;
+
+  const args = message.content.slice(config.prefix.length).trim().split(/ +/);
+  const commandName = args.shift().toLowerCase();
+
+  const command = client.commands.get(commandName);
+  if (!command) return;
+
+  try {
+    await command.execute(message, args, client);
+  } catch (error) {
+    console.error(error);
+    message.reply("There was an error executing that command.");
   }
 });
 
-bot.login(bot.config.token)
+client.on("messageCreate", (message) => {
+  if (message.author.bot) return;
+
+  if (message.content.toLowerCase().includes("meow")) {
+    const responses = [
+      "Meow! 🐱",
+      "😺 Meow meow!",
+      "Mew~",
+      "Purr~ 😻",
+      "Nya~ ✨",
+      "Meeew!",
+      "Mrowww 🐈",
+      "*eepy meow...* 💤",
+      "MEOW!!",
+      "UwU nya~",
+      "🐾 *pounces on you* meow!",
+      "Mrrrp!",
+      "Myaa~ 🌸",
+      "Mrow? 🐱"
+    ];
+    message.channel.send(responses[Math.floor(Math.random() * responses.length)]);
+  }
+});
+
+client.on("guildCreate", (guild) => {
+  console.log("====================================");
+  console.log(`Added to: ${guild.name} (ID: ${guild.id})`);
+  console.log(`Members: ${guild.memberCount}`);
+  console.log(`Total Servers: ${client.guilds.cache.size}`);
+  console.log("====================================");
+});
+
+client.on("guildDelete", (guild) => {
+  console.log("====================================");
+  console.log(`Removed from: ${guild.name} (ID: ${guild.id})`);
+  console.log(`Total Servers: ${client.guilds.cache.size}`);
+  console.log("====================================");
+});
+
+client.login(config.token);

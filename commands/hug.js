@@ -1,19 +1,33 @@
-const hug = ["https://s-media-cache-ak0.pinimg.com/originals/49/a2/1e/49a21e182fcdfb3e96cc9d9421f8ee3f.gif", "https://s-media-cache-ak0.pinimg.com/originals/16/46/f7/1646f720af76ea58853ef231028bafb1.gif", "https://media.giphy.com/media/xJlOdEYy0r7ZS/giphy.gif", "http://i.imgur.com/2WywS3T.gif", "http://i.imgur.com/8ruodNJ.gif", "http://i0.kym-cdn.com/photos/images/original/000/931/030/394.gif", "https://media.tenor.co/images/1171c186f9130d1efa4a186ad4371e8c/tenor.gif"]
-const rn = require('random-number')
+const { EmbedBuilder } = require("discord.js");
 
-module.exports.run = async (bot, message, args) => {
-    if (!message.mentions.users.first()) { return message.channel.send("Well you can't hug the air..."); }
-    let r = rn({
-        min: 0,
-        max: hug.length - 1,
-        integer: true
-    });
-    let image = hug[r];
+const hugGifs = [
+  "https://media.giphy.com/media/l2QDM9Jnim1YVILXa/giphy.gif",
+  "https://media.giphy.com/media/od5H3PmEG5EVq/giphy.gif",
+  "https://media.giphy.com/media/wnsgren9NtITS/giphy.gif",
+  "https://media.giphy.com/media/143v0Z4767T15e/giphy.gif",
+  "https://media.giphy.com/media/sUIZWMnfd4Mb6/giphy.gif",
+  "https://media.giphy.com/media/xT39CXg70nNS0MFNLy/giphy.gif",
+  "https://media.giphy.com/media/BXrwTdoho6hkQ/giphy.gif",
+  "https://media.giphy.com/media/lrr9rHuoJOE0w/giphy.gif",
+  "https://media.giphy.com/media/8tpiC1JAYVMFq/giphy.gif"
+];
 
-    message.channel.send('**' + message.author.username + '** *sends a hug to* **' + message.mentions.users.first().username + '** :heart:\n' + image);
-}
-
-module.exports.help = {
+module.exports = {
   name: "hug",
-  aliases: []
-}
+  description: "Send a hug to someone!",
+  category: "Fun",
+  async execute(message, args) {
+    const user = message.mentions.users.first();
+    if (!user) return message.reply("Please mention someone to hug!");
+
+    const gif = hugGifs[Math.floor(Math.random() * hugGifs.length)];
+
+    const embed = new EmbedBuilder()
+      .setColor(8388736)
+      .setTitle(`${message.author.username} hugged ${user.username}! 🤗`)
+      .setImage(gif)
+      .setTimestamp();
+
+    message.channel.send({ embeds: [embed] });
+  },
+};

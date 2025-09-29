@@ -1,18 +1,30 @@
-const Discord = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 
-module.exports.run = async (bot, message, args) => {
-    let mentionedUser = message.mentions.users.first() || message.author;
-    let embed = new Discord.MessageEmbed()
-    .setImage(mentionedUser.avatarURL())
-    .setColor("00ff00")
-    .setTitle("Avatar")
-    .setFooter("Searched by " + message.author.tag)
-    .setDescription("[Avatar URL link](" + mentionedUser.avatarURL() + ")");
+module.exports = {
+  name: "avatar",
+  description: "Show the avatar of yourself or another user.",
+  category: "Utility",
+  async execute(message, args) {
+    let user = message.mentions.users.first();
 
-    message.channel.send(embed)
-}
+    if (!user && args.length > 0) {
+      const name = args.join(" ").toLowerCase();
+      user = message.guild.members.cache.find(
+        m => m.user.username.toLowerCase().includes(name)
+      )?.user;
+    }
 
-module.exports.help = {
-  name:"avatar",
-  aliases: []
-}
+    if (!user) {
+      user = message.author;
+    }
+
+    const embed = new EmbedBuilder()
+      .setTitle(`${user.username}'s Avatar`)
+      .setImage(user.displayAvatarURL({ size: 1024, dynamic: true }))
+      .setColor(8388736)
+      .setFooter({ text: `Requested by ${message.author.tag}` })
+      .setTimestamp();
+
+    message.channel.send({ embeds: [embed] });
+  },
+};

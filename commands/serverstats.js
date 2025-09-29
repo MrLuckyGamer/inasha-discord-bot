@@ -1,62 +1,111 @@
-exports.run = async (bot, message, args) => {
-  if(!message.member.hasPermission('MANAGE_GUILD')) { return message.channel.send(`:x: You need **MANAGE_GUILD** permission to use this command.`) }
-  if (!args[0]) { return message.channel.send(":x: Invalid parameters. Correct usage: `i>serverstats enable` | `i>serverstats disable`."); }
-  if(args[0] === 'enable') {
-    let totusers = await bot.db.fetch(`Stats_${message.guild.id}`, { target: '.totusers' })
-    let membcount = await bot.db.fetch(`Stats_${message.guild.id}`, { target: '.membcount' })
-    let botcount = await bot.db.fetch(`Stats_${message.guild.id}`, { target: '.botcount' })
-    if(totusers !== undefined || membcount !== undefined || botcount !== undefined) { return message.channel.send(`:x: Server stats are already enabled for this server.`) }
-    if(!message.guild.me.hasPermission(`MANAGE_CHANNELS`)) { return message.channel.send(`:x: I don't have **MANAGE_CHANNELS** permission.`); }
+const { ChannelType, PermissionFlagsBits } = require("discord.js");
+const fs = require("fs");
 
-    const totalsize = message.guild.memberCount;
-    const botsize = message.guild.members.cache.filter(m => m.user.bot).size;
-    const humansize = totalsize - botsize;
-    message.guild.channels.create('📈Server Statistics📈', { type: 'category', permissionOverwrites: [{
-      id: message.guild.roles.everyone.id,
-      deny: ['CONNECT']
-    }]}).then(channel => {
-      channel.setPosition(0)
-      message.guild.channels.create("Total Users : " + totalsize, { type: 'voice', permissionOverwrites: [{
-        id: message.guild.roles.everyone.id,
-        deny: ['CONNECT']
-      }]}).then(channel1 => {
-        channel1.setParent(channel.id)
-        let x = channel1.id
-        message.guild.channels.create("Human Users  : " + humansize, { type: 'voice', permissionOverwrites: [{
-          id: message.guild.roles.everyone.id,
-          deny: ['CONNECT']
-        }]}).then(channel2 => {
-          channel2.setParent(channel.id)
-          let y = channel2.id
-          message.guild.channels.create("Bot Users : " + botsize, { type: 'voice', permissionOverwrites: [{
-            id: message.guild.roles.everyone.id,
-            deny: ['CONNECT']
-          }]}).then(async channel3 => {
-            channel3.setParent(channel.id)
-            let z = channel3.id
-            await bot.db.set(`Stats_${message.guild.id}`, { guildid: message.guild.id, totusers: x, membcount: y, botcount: z, categid: channel.id})
-          })
-        })
-      })
-    })
-    message.channel.send(`:white_check_mark: Serverstats enabled for this server.`)
-  } else if (args[0] === 'disable') {
-    let totusers = await bot.db.fetch(`Stats_${message.guild.id}`).totusers
-    let membcount = await bot.db.fetch(`Stats_${message.guild.id}`).membcount
-    let botcount = await bot.db.fetch(`Stats_${message.guild.id}`).botcount
-    let categ = await bot.db.fetch(`Stats_${message.guild.id}`).categid
-    if(totusers === undefined || membcount === undefined || botcount === undefined) { return message.channel.send(`:x: Serverstats for this server is not enabled.`) }
-    bot.channels.cache.get(totusers).delete()
-    bot.channels.cache.get(membcount).delete()
-    bot.channels.cache.get(botcount).delete()
-    bot.channels.cache.get(categ).delete()
-    
-    bot.db.delete(`Stats_${message.guild.id}`)
-    message.channel.send(`:white_check_mark: Serverstats disabled for this server.`) 
-  }
+const file = "./data/serverstats/serverstats.json";
+let statsChannels = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : {};
+
+module.exports = {
+  name: "serverstats",
+  description: "Enable or disable server statistics channels.",
+  category: "Utility",
+  async execute(message, args) {
+    if (!message.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
+      return message.reply("You need **Manage Server** permission to use this command.");
+    }
+
+    const sub = args[0]?.toLowerCase();
+
+    if (sub === "enable") {
+      if (statsChannels[message.guild.id]) {
+        return message.reply("Stats are already enabled in this server.");
+      }
+
+      const category = await message.guild.channels.create({
+        name: "📊 Server Stats 📊",
+        type: ChannelType.GuildCategory,
+        position: 0,
+      });
+
+      async function createStatChannel(name) {
+        return await message.guild.channels.create({
+          name,
+          type: ChannelType.GuildVoice,
+          parent: category.id,
+          permissionOverwrites: [
+            {
+              id: message.guild.id,
+              deny: [PermissionFlagsBits.Connect],
+            },
+          ],
+        });
+      }
+
+      const usersChannel = await createStatChannel("👥 Users: 0");
+      const botsChannel = await createStatChannel("🤖 Bots: 0");
+      const channelsChannel = await createStatChannel("💬 Channels: 0");
+
+      statsChannels[message.guild.id] = {
+        category: category.id,
+        users: usersChannel.id,
+        bots: botsChannel.id,
+        channels: channelsChannel.id,
+      };
+
+      saveStats();
+      await updateStats(message.guild);
+
+      message.reply("Server stats have been enabled!");
+    }
+
+    else if (sub === "disable") {
+      const data = statsChannels[message.guild.id];
+      if (!data) return message.reply("Stats are not enabled in this server.");
+
+      const category = message.guild.channels.cache.get(data.category);
+      if (category) await category.delete().catch(() => {});
+      Object.values(data).forEach(async (id) => {
+        const ch = message.guild.channels.cache.get(id);
+        if (ch) await ch.delete().catch(() => {});
+      });
+
+      delete statsChannels[message.guild.id];
+      saveStats();
+
+      message.reply("Server stats have been disabled and removed.");
+    }
+
+    else {
+      message.reply("Usage: `i>serverstats enable` or `i>serverstats disable`");
+    }
+  },
+};
+
+function saveStats() {
+  fs.writeFileSync(file, JSON.stringify(statsChannels, null, 2));
 }
 
-module.exports.help = {
-  name:"serverstats",
-  aliases: []
+async function updateStats(guild) {
+  const data = statsChannels[guild.id];
+  if (!data) return;
+
+  await guild.members.fetch();
+
+  const members = guild.members.cache;
+  const users = members.filter(m => !m.user.bot).size;
+  const bots = members.filter(m => m.user.bot).size;
+  const channels = guild.channels.cache.filter(ch => ch.type !== ChannelType.GuildCategory).size;
+
+  const updateChannel = (id, name) => {
+    const ch = guild.channels.cache.get(id);
+    if (ch) ch.setName(name).catch(() => {});
+  };
+
+  updateChannel(data.users, `👥 Users: ${users}`);
+  updateChannel(data.bots, `🤖 Bots: ${bots}`);
+  updateChannel(data.channels, `💬 Channels: ${channels}`);
+
+  const category = guild.channels.cache.get(data.category);
+  if (category) category.setPosition(0).catch(() => {});
 }
+
+module.exports.updateStats = updateStats;

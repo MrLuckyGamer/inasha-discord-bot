@@ -1,0 +1,13 @@
+Copyright (c) 2025 Lucky
+
+All rights reserved.
+
+This software is proprietary.  
+You are granted permission to use this software only by inviting the bot to your Discord server.
+
+You may NOT:
+- Copy, modify, or redistribute the source code
+- Claim ownership of the software or derivatives
+- Attempt to reverse-engineer the bot
+
+The bot is provided "as is", without warranty of any kind.

@@ -1,31 +1,22 @@
 {
-  "name": "app",
+  "name": "inasha",
   "version": "1.0.0",
-  "description": "",
+  "description": "All-Purpose Discord Bot",
   "main": "index.js",
-  "dependencies": {
-    "@discordjs/opus": "^0.3.2",
-    "avconv": "^3.1.0",
-    "discord.js": "^12.3.1",
-    "ffmpeg": "0.0.4",
-    "give-me-a-joke": "^0.3.2",
-    "novelcovid": "^3.0.0",
-    "parse-ms": "^2.1.0",
-    "prism-media": "^1.2.2",
-    "random-number": "^0.0.9",
-    "random-puppy": "^1.1.0",
-    "request": "^2.88.2",
-    "simple-youtube-api": "^5.2.1",
-    "snekfetch": "^4.0.4",
-    "superagent": "^6.1.0",
-    "weather-js": "^2.0.0",
-    "ytdl-core": "^3.4.0"
-  },
-  "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Lucky",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "discord.js": "^14.15.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

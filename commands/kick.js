@@ -1,39 +1,22 @@
-const Discord = require("discord.js")
-module.exports.run = async (bot, message, args) => {
-  if (!message.member.hasPermission("KICK_MEMBERS") && message.author.id !== "320407113887252482") { return message.channel.send("Sorry, you don't have permissions to use this!"); }
-    
-  let xdemb = new Discord.MessageEmbed()
-  .setColor("#00ff00")
-  .setTitle("Kick Command")
-  .addField("Description:", `Kick a member`, true)
-  .addField("Usage:", "i>kick [user] [reason]", true)
-  .addField("Example:" ,"i>kick @AlexD spam")
-  let member = message.mentions.members.first();
-  if(!member) { return message.channel.send(xdemb); }
-    
-  if(!member.kickable) { return message.channel.send("I cannot kick this user!"); }
-  if(member.user.id === "320407113887252482") { return message.channel.send("I can't kick my owner!"); }
-    
-  let reason = args.slice(1).join(' ');
-  if(reason === undefined) {
-    reason = "No reason given";
-  }
-  
-  await member.kick({ reason: reason }).catch(error => message.reply(`Sorry, I couldn't kick because of : ${error}`));
-
-  let kick = new Discord.MessageEmbed()
-  .setColor("#00ff00")
-  .setTitle(`Kick | ${member.user.tag}`)
-  .addField("User", member, true)
-  .addField("Moderator", message.author, true)
-  .addField("Reason", reason)
-  .setTimestamp()
-  .setFooter(member.id)
-
-  message.channel.send(kick)
-}
-
-module.exports.help = {
+module.exports = {
   name: "kick",
-  aliases: []
-}
+  description: "Kick a user from the server.",
+  category: "Moderation",
+  async execute(message, args) {
+    if (!message.member.permissions.has("KickMembers"))
+      return message.reply("You don’t have permission to kick members.");
+
+    const user = message.mentions.members.first();
+    if (!user) return message.reply("You must mention a user to kick.");
+
+    const reason = args.slice(1).join(" ") || "No reason provided";
+
+    try {
+      await user.kick(reason);
+      message.channel.send(`Kicked **${user.user.tag}** | Reason: *${reason}*`);
+    } catch (err) {
+      console.error(err);
+      message.reply("I was unable to kick that user.");
+    }
+  },
+};

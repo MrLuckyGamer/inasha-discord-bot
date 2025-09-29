@@ -1,29 +1,37 @@
-const Discord = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
+const config = require("../config.json");
+const { version: botVersion } = require("../package.json");
 
-module.exports.run = async (bot, message, args) => {
-  let inline = true
-  let bicon = bot.user.displayAvatarURL;
-  let usersize = bot.users.cache.size
-  let chansize = bot.channels.cache.size
-  let uptimxd = bot.uptime 
-  let servsize = bot.guilds.cache.size
-  let botembed = new Discord.MessageEmbed()
-  .setColor("#00ff00")
-  .setThumbnail(bicon)
-  .addField("Bot Name", ` ${bot.user.username}`, inline)
-  .addField("Bot Owner", "Lucky", inline )
-  .addField("Servers", `🛡 ${servsize}`, inline)
-  .addField("Channels", `📁 ${chansize}`, inline)
-  .addField("Users", `${usersize}`, inline)
-  .addField("Bot Library", " Discord.js", inline)
-  .addField("Created On", bot.user.createdAt)
-  .setFooter(`Information about: ${bot.user.username}. Developed by: Lucky and LamkasDev`)
-  .setTimestamp()
-  
-  message.channel.send(botembed);
-}
+module.exports = {
+  name: "botinfo",
+  description: "Show bot information.",
+  category: "Utility",
+  async execute(message) {
+    const client = message.client;
 
-module.exports.help = {
-  name:"botinfo",
-  aliases: ["bi"]
-}
+    const createdDate = client.user.createdAt.toLocaleDateString("en-GB");
+
+    const embed = new EmbedBuilder()
+      .setTitle(`Bot Info: ${client.user.tag}`)
+      .setThumbnail(client.user.displayAvatarURL())
+      .addFields(
+        { name: "Servers", value: `${client.guilds.cache.size}`, inline: true },
+        { name: "Users", value: `${client.users.cache.size}`, inline: true },
+        { name: "Channels", value: `${client.channels.cache.size}`, inline: true },
+        { name: "Prefix", value: `\`${config.prefix}\``, inline: true },
+        { name: "Version", value: botVersion, inline: true },
+
+        { name: "Node.js", value: process.version, inline: true },
+        { name: "Discord.js", value: `v${require("discord.js").version}`, inline: true },
+        //{ name: "Lodash", value: `v${require("lodash/package.json").version}`, inline: true },
+        //{ name: "Undici", value: `v${require("undici/package.json").version}`, inline: true },
+
+        { name: "Created On", value: createdDate, inline: true },
+        { name: "Owner", value: `<@320407113887252482>`, inline: true }
+      )
+      .setColor(8388736)
+      .setTimestamp();
+
+    message.channel.send({ embeds: [embed] });
+  },
+};
