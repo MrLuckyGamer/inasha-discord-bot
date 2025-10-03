@@ -121,6 +121,27 @@ client.on("messageCreate", (message) => {
   }
 });
 
+const TARGET_GUILD_ID = "1179224793078300672";
+const bannedWords = ["fuck", "shit", "nigga", "nigger", "fag", "faggot", "bitch", "slut"];
+
+client.on("messageCreate", async (message) => {
+  if (message.author.bot) return;
+  if (message.guild?.id !== TARGET_GUILD_ID) return;
+
+  const content = message.content.toLowerCase();
+
+  if (bannedWords.some(word => content.includes(word))) {
+    const embed = new EmbedBuilder()
+      .setColor("Red")
+      .setTitle("🚨 Slur Detected!")
+      .setDescription(`${message.author} watch your language!`)
+      .setImage("https://i.imgur.com/0bkSmUl.png")
+      .setTimestamp();
+
+    await message.channel.send({ embeds: [embed] });
+  }
+});
+
 client.on("guildCreate", (guild) => {
   console.log("====================================");
   console.log(`Added to: ${guild.name} (ID: ${guild.id})`);
