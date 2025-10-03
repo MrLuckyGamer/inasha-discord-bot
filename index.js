@@ -122,7 +122,7 @@ client.on("messageCreate", (message) => {
 });
 
 const TARGET_GUILD_ID = "1179224793078300672";
-const bannedWords = ["fuck", "shit", "nigga", "nigger", "fag", "faggot", "bitch", "slut"];
+const bannedWords = ["nig", "nigga", "nigger", "fag", "faggot"];
 
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
