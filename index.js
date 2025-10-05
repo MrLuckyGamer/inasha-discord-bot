@@ -122,7 +122,7 @@ client.on("messageCreate", (message) => {
 });
 
 const TARGET_GUILD_ID = "1179224793078300672";
-const bannedWords = ["nigga", "nigger", "fag", "faggot"];
+const bannedWords = ["nig", "nigga", "nigger", "fag", "faggot"];
 
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
@@ -130,7 +130,12 @@ client.on("messageCreate", async (message) => {
 
   const content = message.content.toLowerCase();
 
-  if (bannedWords.some(word => content.includes(word))) {
+  const isBanned = bannedWords.some(word => {
+    const pattern = new RegExp(`\\b${word}\\b`, "i");
+    return pattern.test(content);
+  });
+
+  if (isBanned) {
     const embed = new EmbedBuilder()
       .setColor("Red")
       .setTitle("🚨 Slur Detected!")
