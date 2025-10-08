@@ -119,6 +119,28 @@ client.on("messageCreate", (message) => {
     ];
     message.channel.send(responses[Math.floor(Math.random() * responses.length)]);
   }
+
+  const dogWords = ["woof", "bark", "ruff", "arf"];
+  if (dogWords.some(word => message.content.toLowerCase().includes(word))) {
+    const responses = [
+      "Woof! 🐶",
+      "Bark bark! 🐾",
+      "Arf arf!",
+      "Ruff~ 🐕",
+      "Woooof! 😄",
+      "🐕 *wags tail excitedly*",
+      "Grr... just kidding! 🐶❤️",
+      "*tilts head* arf?",
+      "Awoo~ 🌕🐺",
+      "*runs in circles* WOOF!",
+      "Borf borf! 🐾",
+      "🐶 *gives you a slobbery kiss*",
+      "Wag wag wag! 🦴",
+      "Ruff ruff!!",
+      "🐕‍🦺 *sits like a good boi*"
+    ];
+    message.channel.send(responses[Math.floor(Math.random() * responses.length)]);
+  }
 });
 
 const TARGET_GUILD_ID = "1179224793078300672";
