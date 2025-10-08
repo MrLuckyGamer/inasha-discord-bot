@@ -142,20 +142,40 @@ client.on("messageCreate", (message) => {
 
   if (message.content.toLowerCase().includes("meow")) {
     const responses = [
-      "Meow! 🐱", "😺 Meow meow!", "Mew~", "Purr~ 😻", "Nya~ ✨",
-      "Meeew!", "Mrowww 🐈", "*eepy meow...* 💤", "MEOW!!", "UwU nya~",
-      "🐾 *pounces on you* meow!", "Mrrrp!", "Myaa~ 🌸", "Mrow? 🐱"
+      "Meow! 🐱",
+      "😺 Meow meow!",
+      "Mew~",
+      "Purr~ 😻",
+      "Nya~ ✨",
+      "Meeew!",
+      "Mrowww 🐈",
+      "*eepy meow...* 💤",
+      "MEOW!!", "UwU nya~",
+      "🐾 *pounces on you* meow!",
+      "Mrrrp!",
+      "Myaa~ 🌸",
+      "Mrow? 🐱"
     ];
     message.channel.send(responses[Math.floor(Math.random() * responses.length)]);
   }
 
-  const dogWords = ["woof", "bark", "ruff", "arf"];
+  const dogWords = ["woof", "bark", "bork", "ruff", "arf"];
   if (dogWords.some(word => message.content.toLowerCase().includes(word))) {
     const responses = [
-      "Woof! 🐶", "Bark bark! 🐾", "Arf arf!", "Ruff~ 🐕", "Woooof! 😄",
-      "🐕 *wags tail excitedly*", "Grr... just kidding! 🐶❤️", "*tilts head* arf?",
-      "Awoo~ 🌕🐺", "*runs in circles* WOOF!", "Borf borf! 🐾",
-      "🐶 *gives you a slobbery kiss*", "Wag wag wag! 🦴", "Ruff ruff!!",
+      "Woof! 🐶",
+      "Bark bark! 🐾",
+      "bork bork! 🐕",
+      "Arf arf!", "Ruff~ 🐕",
+      "Woooof! 😄",
+      "🐕 *wags tail excitedly*",
+      "Grr... just kidding! 🐶❤️",
+      "*tilts head* arf?",
+      "Awoo~ 🌕🐺",
+      "*runs in circles* WOOF!",
+      "Borf borf! 🐾",
+      "🐶 *gives you a slobbery kiss*",
+      "Wag wag wag! 🦴",
+      "Ruff ruff!!",
       "🐕‍🦺 *sits like a good boi*"
     ];
     message.channel.send(responses[Math.floor(Math.random() * responses.length)]);
