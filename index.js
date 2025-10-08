@@ -25,46 +25,58 @@ for (const file of commandFiles) {
 }
 
 const slashPath = path.join(__dirname, "slash-commands");
-if (fs.existsSync(slashPath)) {
-  const slashFiles = fs.readdirSync(slashPath).filter(file => file.endsWith(".js"));
-  const slashJSON = [];
+const slashJSON = [];
+const slashFiles = fs.existsSync(slashPath)
+  ? fs.readdirSync(slashPath).filter(file => file.endsWith(".js"))
+  : [];
 
-  for (const file of slashFiles) {
-    const command = require(`./slash-commands/${file}`);
-    client.slashCommands.set(command.data.name, command);
-    slashJSON.push(command.data.toJSON());
-  }
+for (const file of slashFiles) {
+  const command = require(`./slash-commands/${file}`);
+  client.slashCommands.set(command.data.name, command);
+  slashJSON.push(command.data.toJSON());
+}
 
-  const rest = new REST({ version: "10" }).setToken(config.token);
+const rest = new REST({ version: "10" }).setToken(config.token);
 
-  (async () => {
-    try {
-      console.log("Cleaning old global slash commands and registering new ones...");
+(async () => {
+  try {
+    console.log("Cleaning old global slash commands and registering new ones...");
 
-      const existingCommands = await rest.get(
-        Routes.applicationCommands(config.clientId)
-      );
-
-      const commandsToDelete = existingCommands.filter(
-        cmd => !slashJSON.some(newCmd => newCmd.name === cmd.name)
-      );
-
-      for (const cmd of commandsToDelete) {
+    const existingGlobal = await rest.get(Routes.applicationCommands(config.clientId));
+    for (const cmd of existingGlobal) {
+      if (!slashJSON.some(c => c.name === cmd.name)) {
         console.log(`Deleting old global slash command: ${cmd.name}`);
         await rest.delete(Routes.applicationCommand(config.clientId, cmd.id));
       }
-
-      await rest.put(
-        Routes.applicationCommands(config.clientId),
-        { body: slashJSON }
-      );
-
-      console.log("Global slash commands cleaned and registered successfully.");
-    } catch (error) {
-      console.error("Failed to update global slash commands:", error);
     }
-  })();
-}
+    await rest.put(Routes.applicationCommands(config.clientId), { body: slashJSON });
+    console.log("Global slash commands registered successfully.");
+
+    if (config.guildIds && config.guildIds.length) {
+      for (const guildId of config.guildIds) {
+        console.log(`Cleaning old slash commands in guild ${guildId}...`);
+
+        const existingGuild = await rest.get(
+          Routes.applicationGuildCommands(config.clientId, guildId)
+        );
+
+        for (const cmd of existingGuild) {
+          if (!slashJSON.some(c => c.name === cmd.name)) {
+            console.log(`Deleting old guild slash command ${cmd.name} in guild ${guildId}`);
+            await rest.delete(Routes.applicationGuildCommand(config.clientId, guildId, cmd.id));
+          }
+        }
+
+        await rest.put(Routes.applicationGuildCommands(config.clientId, guildId), { body: slashJSON });
+        console.log(`Guild slash commands registered successfully in ${guildId}.`);
+      }
+    }
+
+    console.log("All slash commands are now clean and up-to-date.");
+  } catch (error) {
+    console.error("Failed to update slash commands:", error);
+  }
+})();
 
 client.on("guildMemberAdd", member => updateStats(member.guild));
 client.on("guildMemberRemove", member => updateStats(member.guild));
