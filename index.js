@@ -36,16 +36,34 @@ if (fs.existsSync(slashPath)) {
   }
 
   const rest = new REST({ version: "10" }).setToken(config.token);
+
   (async () => {
     try {
-      console.log("Registering slash commands...");
+      console.log("Cleaning old slash commands and registering new ones...");
+
+      const existingCommands = await rest.get(
+        Routes.applicationGuildCommands(config.clientId, config.guildId)
+      );
+
+      const commandsToDelete = existingCommands.filter(
+        cmd => !slashJSON.some(newCmd => newCmd.name === cmd.name)
+      );
+
+      for (const cmd of commandsToDelete) {
+        console.log(`Deleting old slash command: ${cmd.name}`);
+        await rest.delete(
+          Routes.applicationGuildCommand(config.clientId, config.guildId, cmd.id)
+        );
+      }
+
       await rest.put(
         Routes.applicationGuildCommands(config.clientId, config.guildId),
         { body: slashJSON }
       );
-      console.log("Slash commands registered successfully.");
+
+      console.log("Slash commands cleaned and registered successfully.");
     } catch (error) {
-      console.error("Failed to register slash commands:", error);
+      console.error("Failed to update slash commands:", error);
     }
   })();
 }
