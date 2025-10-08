@@ -39,10 +39,10 @@ if (fs.existsSync(slashPath)) {
 
   (async () => {
     try {
-      console.log("Cleaning old slash commands and registering new ones...");
+      console.log("Cleaning old global slash commands and registering new ones...");
 
       const existingCommands = await rest.get(
-        Routes.applicationGuildCommands(config.clientId, config.guildId)
+        Routes.applicationCommands(config.clientId)
       );
 
       const commandsToDelete = existingCommands.filter(
@@ -50,20 +50,18 @@ if (fs.existsSync(slashPath)) {
       );
 
       for (const cmd of commandsToDelete) {
-        console.log(`Deleting old slash command: ${cmd.name}`);
-        await rest.delete(
-          Routes.applicationGuildCommand(config.clientId, config.guildId, cmd.id)
-        );
+        console.log(`Deleting old global slash command: ${cmd.name}`);
+        await rest.delete(Routes.applicationCommand(config.clientId, cmd.id));
       }
 
       await rest.put(
-        Routes.applicationGuildCommands(config.clientId, config.guildId),
+        Routes.applicationCommands(config.clientId),
         { body: slashJSON }
       );
 
-      console.log("Slash commands cleaned and registered successfully.");
+      console.log("Global slash commands cleaned and registered successfully.");
     } catch (error) {
-      console.error("Failed to update slash commands:", error);
+      console.error("Failed to update global slash commands:", error);
     }
   })();
 }
