@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, Collection, EmbedBuilder } = require("discord.js");
+const { Client, GatewayIntentBits, Collection, EmbedBuilder, REST, Routes } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
 const config = require("./config.json");
@@ -14,6 +14,7 @@ const client = new Client({
 });
 
 client.commands = new Collection();
+client.slashCommands = new Collection();
 
 const commandsPath = path.join(__dirname, "commands");
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith(".js"));
@@ -21,6 +22,32 @@ const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith("
 for (const file of commandFiles) {
   const command = require(`./commands/${file}`);
   client.commands.set(command.name, command);
+}
+
+const slashPath = path.join(__dirname, "slash-commands");
+if (fs.existsSync(slashPath)) {
+  const slashFiles = fs.readdirSync(slashPath).filter(file => file.endsWith(".js"));
+  const slashJSON = [];
+
+  for (const file of slashFiles) {
+    const command = require(`./slash-commands/${file}`);
+    client.slashCommands.set(command.data.name, command);
+    slashJSON.push(command.data.toJSON());
+  }
+
+  const rest = new REST({ version: "10" }).setToken(config.token);
+  (async () => {
+    try {
+      console.log("Registering slash commands...");
+      await rest.put(
+        Routes.applicationGuildCommands(config.clientId, config.guildId),
+        { body: slashJSON }
+      );
+      console.log("Slash commands registered successfully.");
+    } catch (error) {
+      console.error("Failed to register slash commands:", error);
+    }
+  })();
 }
 
 client.on("guildMemberAdd", member => updateStats(member.guild));
@@ -34,29 +61,24 @@ client.once("clientReady", async () => {
 
   for (const guild of client.guilds.cache.values()) {
     await guild.members.fetch();
-
-    const members = guild.members.cache;
-    totalUsers += members.filter(m => !m.user.bot).size;
-
+    totalUsers += guild.members.cache.filter(m => !m.user.bot).size;
     totalChannels += guild.channels.cache.size;
   }
 
-  const guildCount = client.guilds.cache.size;
-
   console.log("==========================");
   console.log(`Logged in as ${client.user.tag}`);
-  console.log(`Serving in ${guildCount} servers`);
+  console.log(`Serving in ${client.guilds.cache.size} servers`);
   console.log(`Watching over ${totalUsers} users`);
   console.log(`Monitoring ${totalChannels} channels`);
   console.log("==========================");
 
   client.user.setPresence({
-    status: 'online', // online, idle, dnd, invisible
+    status: "online", // online, idle, dnd, invisible
     activities: [
       {
         name: `${config.prefix}help`,
         type: 1, // 0 = Playing, 1 = Streaming, 2 = Listening, 3 = Watching, 4 = Custom
-        url: 'https://twitch.tv/femboyyluckyy' // Only needed if type is 1 (Streaming)
+        url: "https://twitch.tv/femboyyluckyy" // Only needed if type is 1 (Streaming)
       }
     ]
   });
@@ -102,20 +124,9 @@ client.on("messageCreate", (message) => {
 
   if (message.content.toLowerCase().includes("meow")) {
     const responses = [
-      "Meow! 🐱",
-      "😺 Meow meow!",
-      "Mew~",
-      "Purr~ 😻",
-      "Nya~ ✨",
-      "Meeew!",
-      "Mrowww 🐈",
-      "*eepy meow...* 💤",
-      "MEOW!!",
-      "UwU nya~",
-      "🐾 *pounces on you* meow!",
-      "Mrrrp!",
-      "Myaa~ 🌸",
-      "Mrow? 🐱"
+      "Meow! 🐱", "😺 Meow meow!", "Mew~", "Purr~ 😻", "Nya~ ✨",
+      "Meeew!", "Mrowww 🐈", "*eepy meow...* 💤", "MEOW!!", "UwU nya~",
+      "🐾 *pounces on you* meow!", "Mrrrp!", "Myaa~ 🌸", "Mrow? 🐱"
     ];
     message.channel.send(responses[Math.floor(Math.random() * responses.length)]);
   }
@@ -123,20 +134,10 @@ client.on("messageCreate", (message) => {
   const dogWords = ["woof", "bark", "ruff", "arf"];
   if (dogWords.some(word => message.content.toLowerCase().includes(word))) {
     const responses = [
-      "Woof! 🐶",
-      "Bark bark! 🐾",
-      "Arf arf!",
-      "Ruff~ 🐕",
-      "Woooof! 😄",
-      "🐕 *wags tail excitedly*",
-      "Grr... just kidding! 🐶❤️",
-      "*tilts head* arf?",
-      "Awoo~ 🌕🐺",
-      "*runs in circles* WOOF!",
-      "Borf borf! 🐾",
-      "🐶 *gives you a slobbery kiss*",
-      "Wag wag wag! 🦴",
-      "Ruff ruff!!",
+      "Woof! 🐶", "Bark bark! 🐾", "Arf arf!", "Ruff~ 🐕", "Woooof! 😄",
+      "🐕 *wags tail excitedly*", "Grr... just kidding! 🐶❤️", "*tilts head* arf?",
+      "Awoo~ 🌕🐺", "*runs in circles* WOOF!", "Borf borf! 🐾",
+      "🐶 *gives you a slobbery kiss*", "Wag wag wag! 🦴", "Ruff ruff!!",
       "🐕‍🦺 *sits like a good boi*"
     ];
     message.channel.send(responses[Math.floor(Math.random() * responses.length)]);
@@ -166,6 +167,19 @@ client.on("messageCreate", async (message) => {
       .setTimestamp();
 
     await message.channel.send({ embeds: [embed] });
+  }
+});
+
+client.on("interactionCreate", async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
+  const command = client.slashCommands.get(interaction.commandName);
+  if (!command) return;
+
+  try {
+    await command.execute(interaction, client);
+  } catch (error) {
+    console.error(error);
+    await interaction.reply({ content: "There was an error executing this command.", ephemeral: true });
   }
 });
 
