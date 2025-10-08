@@ -3,7 +3,7 @@
 [![version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/MrLuckyGamer/inasha-discord-bot)
 [![node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg?logo=node&logoColor=white)](https://nodejs.org/)
 [![discord.js](https://img.shields.io/badge/discord.js-%5E14.15.3-7289da.svg)](https://discord.js.org/)
-[![license](https://img.shields.io/badge/license-LICENSED-green.svg)](https://github.com/MrLuckyGamer/inasha-discord-bot/blob/main/LICENSE.txt)
+[![license](https://img.shields.io/badge/license-LICENSED-green.svg)](https://github.com/MrLuckyGamer/inasha-discord-bot/blob/main/LICENSE.md)
 
 **Inasha** is an all-purpose Discord bot with moderation, fun, and utility commands. It enhances server engagement, provides entertainment, and helps keep communities safe. The bot supports both prefix commands (`i>`) and modern slash commands, includes server statistics tracking, and automatic responses.
 
