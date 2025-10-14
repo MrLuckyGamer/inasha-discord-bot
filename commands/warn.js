@@ -12,6 +12,7 @@ if (!fs.existsSync(WARN_FILE)) {
 function loadWarns() {
   return JSON.parse(fs.readFileSync(WARN_FILE, "utf8"));
 }
+
 function saveWarns(data) {
   fs.writeFileSync(WARN_FILE, JSON.stringify(data, null, 2));
 }
@@ -22,6 +23,10 @@ module.exports = {
   category: "Moderation",
   usage: "<@user> <reason> | view <@user> | delete <@user> <warnID>",
   async execute(message, args) {
+    if (!message.member.permissions.has(PermissionFlagsBits.ManageMessages)) {
+      return message.reply("You need **Manage Messages** permission to use this command.");
+    }
+
     if (!args.length)
       return message.reply("Usage: `i>warn <@user> <reason>` | `i>warn view <@user>` | `i>warn delete <@user> <warnID>`");
 
@@ -56,9 +61,6 @@ module.exports = {
     }
 
     if (sub === "delete") {
-      if (!message.member.permissions.has(PermissionFlagsBits.ManageMessages))
-        return message.reply("You need **Manage Messages** permission to delete warnings.");
-
       const member = message.mentions.members.first();
       if (!member) return message.reply("Please mention a user to delete their warning.");
 
@@ -76,10 +78,6 @@ module.exports = {
       return message.reply(
         `Removed warning #${index} for ${member.user.tag} (Reason: ${removed[0].reason}).`
       );
-    }
-
-    if (!message.member.permissions.has(PermissionFlagsBits.KickMembers)) {
-      return message.reply("You need **Kick Members** permission to warn users.");
     }
 
     const member = message.mentions.members.first();
