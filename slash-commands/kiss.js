@@ -14,26 +14,40 @@ const kissGifs = [
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("kiss")
-    .setDescription("Send a kiss to someone")
+    .setDescription("Send a kiss to someone!")
     .setDMPermission(true)
     .addUserOption(option =>
       option.setName("target")
+        .setDescription("Who do you want to kiss?")
+        .setRequired(false)
+    )
+    .addStringOption(option =>
+      option.setName("username")
         .setDescription("Who do you want to kiss?")
         .setRequired(false)
     ),
 
   async execute(interaction, client) {
     const gif = kissGifs[Math.floor(Math.random() * kissGifs.length)];
-    const target = interaction.options.getUser("target");
 
     let title;
 
     if (!interaction.guild) {
-      title = `💌 ${interaction.user.username} sends a kiss into your DMs! 😘`;
-    } else if (target) {
-      title = `${interaction.user.username} kissed ${target.username}! 😘`;
+      const username = interaction.options.getString("username");
+      if (username) {
+        title = `${interaction.user.username} sends a kiss to ${username}! 😘`;
+      } else {
+        title = `${interaction.user.username} sends a kiss into your DMs! 💌`;
+      }
     } else {
-      title = `${interaction.user.username} blows a kiss to everyone! 💋`;
+      const target = interaction.options.getUser("target");
+      if (!target) {
+        return await interaction.reply({
+          content: "You must specify a user to kiss.",
+          ephemeral: true
+        });
+      }
+      title = `${interaction.user.username} kissed ${target.username}! 😘`;
     }
 
     const embed = new EmbedBuilder()
