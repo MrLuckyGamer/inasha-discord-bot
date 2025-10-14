@@ -14,20 +14,31 @@ const kissGifs = [
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("kiss")
-    .setDescription("Send a kiss to someone!")
+    .setDescription("Send a kiss to someone")
+    .setDMPermission(true)
     .addUserOption(option =>
       option.setName("target")
         .setDescription("Who do you want to kiss?")
-        .setRequired(true)
+        .setRequired(false)
     ),
 
   async execute(interaction, client) {
-    const user = interaction.options.getUser("target");
     const gif = kissGifs[Math.floor(Math.random() * kissGifs.length)];
+    const target = interaction.options.getUser("target");
+
+    let title;
+
+    if (!interaction.guild) {
+      title = `💌 ${interaction.user.username} sends a kiss into your DMs! 😘`;
+    } else if (target) {
+      title = `${interaction.user.username} kissed ${target.username}! 😘`;
+    } else {
+      title = `${interaction.user.username} blows a kiss to everyone! 💋`;
+    }
 
     const embed = new EmbedBuilder()
-      .setColor(8388736)
-      .setTitle(`${interaction.user.username} kissed ${user.username}! 😘`)
+      .setColor(0xff66aa)
+      .setTitle(title)
       .setImage(gif)
       .setTimestamp();
 

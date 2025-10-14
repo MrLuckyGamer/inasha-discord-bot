@@ -10,20 +10,24 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.DirectMessages,
   ],
+  partials: ["CHANNEL"], // Needed to receive DMs
 });
 
+// === Command Loading ===
 client.commands = new Collection();
 client.slashCommands = new Collection();
 
+// Prefix Commands
 const commandsPath = path.join(__dirname, "commands");
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith(".js"));
-
 for (const file of commandFiles) {
   const command = require(`./commands/${file}`);
   client.commands.set(command.name, command);
 }
 
+// Slash Commands
 const slashPath = path.join(__dirname, "slash-commands");
 const slashJSON = [];
 const slashFiles = fs.existsSync(slashPath)
@@ -36,48 +40,31 @@ for (const file of slashFiles) {
   slashJSON.push(command.data.toJSON());
 }
 
+// === Register Global Slash Commands ===
 const rest = new REST({ version: "10" }).setToken(config.token);
 
 (async () => {
   try {
-    console.log("Cleaning old global slash commands and registering new ones...");
+    console.log("Cleaning and registering global slash commands...");
 
+    // Delete old global commands not in slashJSON
     const existingGlobal = await rest.get(Routes.applicationCommands(config.clientId));
     for (const cmd of existingGlobal) {
       if (!slashJSON.some(c => c.name === cmd.name)) {
-        console.log(`Deleting old global slash command: ${cmd.name}`);
+        console.log(`Deleting old global command: ${cmd.name}`);
         await rest.delete(Routes.applicationCommand(config.clientId, cmd.id));
       }
     }
+
+    // Register new ones
     await rest.put(Routes.applicationCommands(config.clientId), { body: slashJSON });
-    console.log("Global slash commands registered successfully.");
-
-    if (config.guildIds && config.guildIds.length) {
-      for (const guildId of config.guildIds) {
-        console.log(`Cleaning old slash commands in guild ${guildId}...`);
-
-        const existingGuild = await rest.get(
-          Routes.applicationGuildCommands(config.clientId, guildId)
-        );
-
-        for (const cmd of existingGuild) {
-          if (!slashJSON.some(c => c.name === cmd.name)) {
-            console.log(`Deleting old guild slash command ${cmd.name} in guild ${guildId}`);
-            await rest.delete(Routes.applicationGuildCommand(config.clientId, guildId, cmd.id));
-          }
-        }
-
-        await rest.put(Routes.applicationGuildCommands(config.clientId, guildId), { body: slashJSON });
-        console.log(`Guild slash commands registered successfully in ${guildId}.`);
-      }
-    }
-
-    console.log("All slash commands are now clean and up-to-date.");
+    console.log("Global slash commands registered successfully (DMs + servers).");
   } catch (error) {
     console.error("Failed to update slash commands:", error);
   }
 })();
 
+// === Event Handlers ===
 client.on("guildMemberAdd", member => updateStats(member.guild));
 client.on("guildMemberRemove", member => updateStats(member.guild));
 client.on("channelCreate", channel => updateStats(channel.guild));
@@ -125,17 +112,15 @@ client.once("clientReady", async () => {
   }, 10 * 60 * 1000);
 });
 
+// === Prefix Commands ===
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
-
-  const content = message.content.toLowerCase();
   const prefix = config.prefix.toLowerCase();
-
+  const content = message.content.toLowerCase();
   if (!content.startsWith(prefix)) return;
 
   const args = message.content.slice(config.prefix.length).trim().split(/ +/);
   const commandName = args.shift().toLowerCase();
-
   const command = client.commands.get(commandName);
   if (!command) return;
 
@@ -147,20 +132,23 @@ client.on("messageCreate", async (message) => {
   }
 });
 
+// === Fun Responses ===
 client.on("messageCreate", (message) => {
   if (message.author.bot) return;
 
-  if (message.content.toLowerCase().includes("meow")) {
+  const lower = message.content.toLowerCase();
+
+  if (lower.includes("meow")) {
     const responses = [
       "Meow! 🐱",
       "😺 Meow meow!",
-      "Mew~",
-      "Purr~ 😻",
+      "Mew~", "Purr~ 😻",
       "Nya~ ✨",
       "Meeew!",
       "Mrowww 🐈",
       "*eepy meow...* 💤",
-      "MEOW!!", "UwU nya~",
+      "MEOW!!",
+      "UwU nya~",
       "🐾 *pounces on you* meow!",
       "Mrrrp!",
       "Myaa~ 🌸",
@@ -170,12 +158,13 @@ client.on("messageCreate", (message) => {
   }
 
   const dogWords = ["woof", "bark", "bork", "ruff", "arf"];
-  if (dogWords.some(word => message.content.toLowerCase().includes(word))) {
+  if (dogWords.some(word => lower.includes(word))) {
     const responses = [
       "Woof! 🐶",
       "Bark bark! 🐾",
       "bork bork! 🐕",
-      "Arf arf!", "Ruff~ 🐕",
+      "Arf arf!",
+      "Ruff~ 🐕",
       "Woooof! 😄",
       "🐕 *wags tail excitedly*",
       "Grr... just kidding! 🐶❤️",
@@ -192,6 +181,7 @@ client.on("messageCreate", (message) => {
   }
 });
 
+// === Funny thing for Friends Server (specific guild only) ===
 const TARGET_GUILD_ID = "1179224793078300672";
 const bannedWords = ["nig", "nigga", "nigger", "fag", "faggot"];
 
@@ -200,12 +190,7 @@ client.on("messageCreate", async (message) => {
   if (message.guild?.id !== TARGET_GUILD_ID) return;
 
   const content = message.content.toLowerCase();
-
-  const isBanned = bannedWords.some(word => {
-    const pattern = new RegExp(`\\b${word}\\b`, "i");
-    return pattern.test(content);
-  });
-
+  const isBanned = bannedWords.some(word => new RegExp(`\\b${word}\\b`, "i").test(content));
   if (isBanned) {
     const embed = new EmbedBuilder()
       .setColor("Red")
@@ -213,11 +198,11 @@ client.on("messageCreate", async (message) => {
       .setDescription(`${message.author} watch your language!`)
       .setImage("https://i.imgur.com/0bkSmUl.png")
       .setTimestamp();
-
     await message.channel.send({ embeds: [embed] });
   }
 });
 
+// === Slash Command Execution ===
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
   const command = client.slashCommands.get(interaction.commandName);
@@ -231,9 +216,10 @@ client.on("interactionCreate", async (interaction) => {
   }
 });
 
+// === Log server join/leave ===
 client.on("guildCreate", (guild) => {
   console.log("====================================");
-  console.log(`Added to: ${guild.name} (ID: ${guild.id})`);
+  console.log(`Added to: ${guild.name} (${guild.id})`);
   console.log(`Members: ${guild.memberCount}`);
   console.log(`Total Servers: ${client.guilds.cache.size}`);
   console.log("====================================");
@@ -241,9 +227,10 @@ client.on("guildCreate", (guild) => {
 
 client.on("guildDelete", (guild) => {
   console.log("====================================");
-  console.log(`Removed from: ${guild.name} (ID: ${guild.id})`);
+  console.log(`Removed from: ${guild.name} (${guild.id})`);
   console.log(`Total Servers: ${client.guilds.cache.size}`);
   console.log("====================================");
 });
 
+// === Login ===
 client.login(config.token);
