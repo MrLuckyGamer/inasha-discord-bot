@@ -37,7 +37,7 @@ module.exports = {
     }
 
     const embed = new EmbedBuilder()
-      .setColor(0xff66aa)
+      .setColor(8388736)
       .setTitle(title)
       .setImage(gif)
       .setTimestamp();
