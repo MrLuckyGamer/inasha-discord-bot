@@ -1,11 +1,83 @@
 const { PermissionFlagsBits, EmbedBuilder } = require("discord.js");
+const fs = require("fs");
+const path = require("path");
+
+const WARN_FILE = path.join(__dirname, "../data/warns/warns.json");
+
+if (!fs.existsSync(WARN_FILE)) {
+  fs.mkdirSync(path.dirname(WARN_FILE), { recursive: true });
+  fs.writeFileSync(WARN_FILE, "{}");
+}
+
+function loadWarns() {
+  return JSON.parse(fs.readFileSync(WARN_FILE, "utf8"));
+}
+function saveWarns(data) {
+  fs.writeFileSync(WARN_FILE, JSON.stringify(data, null, 2));
+}
 
 module.exports = {
   name: "warn",
-  description: "Warn a user with a reason in the channel.",
+  description: "Warn, view, or delete warnings for users.",
   category: "Moderation",
-  usage: "<@user> <reason>",
+  usage: "<@user> <reason> | view <@user> | delete <@user> <warnID>",
   async execute(message, args) {
+    if (!args.length)
+      return message.reply("Usage: `i>warn <@user> <reason>` | `i>warn view <@user>` | `i>warn delete <@user> <warnID>`");
+
+    const warns = loadWarns();
+    const guildId = message.guild.id;
+
+    if (!warns[guildId]) warns[guildId] = {};
+
+    const sub = args[0].toLowerCase();
+
+    if (sub === "view") {
+      const member = message.mentions.members.first();
+      if (!member) return message.reply("Please mention a user to view their warnings.");
+
+      const userWarns = warns[guildId][member.id] || [];
+      if (userWarns.length === 0) return message.reply(`${member.user.tag} has no warnings.`);
+
+      const embed = new EmbedBuilder()
+        .setTitle(`Warnings for ${member.user.tag}`)
+        .setColor("Orange")
+        .setDescription(
+          userWarns
+            .map(
+              (w, i) =>
+                `**#${i + 1}** — by ${w.moderatorTag}\n**Reason:** ${w.reason}\n*${w.date}*`
+            )
+            .join("\n\n")
+        )
+        .setTimestamp();
+
+      return message.channel.send({ embeds: [embed] });
+    }
+
+    if (sub === "delete") {
+      if (!message.member.permissions.has(PermissionFlagsBits.ManageMessages))
+        return message.reply("You need **Manage Messages** permission to delete warnings.");
+
+      const member = message.mentions.members.first();
+      if (!member) return message.reply("Please mention a user to delete their warning.");
+
+      const index = parseInt(args[2]);
+      if (isNaN(index)) return message.reply("Please specify a valid warning number to delete.");
+
+      const userWarns = warns[guildId][member.id] || [];
+      if (index < 1 || index > userWarns.length)
+        return message.reply("That warning number does not exist.");
+
+      const removed = userWarns.splice(index - 1, 1);
+      warns[guildId][member.id] = userWarns;
+      saveWarns(warns);
+
+      return message.reply(
+        `Removed warning #${index} for ${member.user.tag} (Reason: ${removed[0].reason}).`
+      );
+    }
+
     if (!message.member.permissions.has(PermissionFlagsBits.KickMembers)) {
       return message.reply("You need **Kick Members** permission to warn users.");
     }
@@ -16,8 +88,20 @@ module.exports = {
     const reason = args.slice(1).join(" ");
     if (!reason) return message.reply("Please provide a reason for the warning.");
 
+    if (!warns[guildId][member.id]) warns[guildId][member.id] = [];
+
+    const warnEntry = {
+      moderatorId: message.author.id,
+      moderatorTag: message.author.tag,
+      reason: reason,
+      date: new Date().toLocaleString(),
+    };
+
+    warns[guildId][member.id].push(warnEntry);
+    saveWarns(warns);
+
     const warnEmbed = new EmbedBuilder()
-      .setTitle("⚠️ User Warned")
+      .setTitle("User Warned")
       .setColor("Orange")
       .addFields(
         { name: "User", value: `${member.user.tag}`, inline: true },
@@ -26,6 +110,6 @@ module.exports = {
       )
       .setTimestamp();
 
-    message.channel.send({ embeds: [warnEmbed] });
+    await message.channel.send({ embeds: [warnEmbed] });
   },
 };

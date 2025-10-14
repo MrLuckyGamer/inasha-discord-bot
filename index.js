@@ -51,7 +51,7 @@ const rest = new REST({ version: "10" }).setToken(config.token);
     const existingGlobal = await rest.get(Routes.applicationCommands(config.clientId));
     for (const cmd of existingGlobal) {
       if (!slashJSON.some(c => c.name === cmd.name)) {
-        console.log(`Deleting old global command: ${cmd.name}`);
+        console.log(`Deleting old global slash commands: ${cmd.name}`);
         await rest.delete(Routes.applicationCommand(config.clientId, cmd.id));
       }
     }
@@ -219,7 +219,7 @@ client.on("interactionCreate", async (interaction) => {
 // === Log server join/leave ===
 client.on("guildCreate", (guild) => {
   console.log("====================================");
-  console.log(`Added to: ${guild.name} (${guild.id})`);
+  console.log(`Added to: ${guild.name} (ID: ${guild.id})`);
   console.log(`Members: ${guild.memberCount}`);
   console.log(`Total Servers: ${client.guilds.cache.size}`);
   console.log("====================================");
@@ -227,7 +227,7 @@ client.on("guildCreate", (guild) => {
 
 client.on("guildDelete", (guild) => {
   console.log("====================================");
-  console.log(`Removed from: ${guild.name} (${guild.id})`);
+  console.log(`Removed from: ${guild.name} (ID: ${guild.id})`);
   console.log(`Total Servers: ${client.guilds.cache.size}`);
   console.log("====================================");
 });
