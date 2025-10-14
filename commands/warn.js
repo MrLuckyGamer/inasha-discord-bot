@@ -37,6 +37,12 @@ module.exports = {
 
     const sub = args[0].toLowerCase();
 
+    const renderDate = (d) => {
+      if (!d) return "Unknown date";
+      if (typeof d === "number") return `<t:${d}:f>`;
+      return `\`${d}\``;
+    };
+
     if (sub === "view") {
       const member = message.mentions.members.first();
       if (!member) return message.reply("Please mention a user to view their warnings.");
@@ -51,7 +57,7 @@ module.exports = {
           userWarns
             .map(
               (w, i) =>
-                `**#${i + 1}** — by ${w.moderatorTag}\n**Reason:** ${w.reason}\n*${w.date}*`
+                `**#${i + 1}** — by ${w.moderatorTag}\n**Reason:** ${w.reason}\n*${renderDate(w.date)}*`
             )
             .join("\n\n")
         )
@@ -75,8 +81,9 @@ module.exports = {
       warns[guildId][member.id] = userWarns;
       saveWarns(warns);
 
+      const removedDate = removed[0].date;
       return message.reply(
-        `Removed warning #${index} for ${member.user.tag} (Reason: ${removed[0].reason}).`
+        `Removed warning #${index} for ${member.user.tag} (Reason: ${removed[0].reason}) — ${renderDate(removedDate)}.`
       );
     }
 
@@ -92,7 +99,7 @@ module.exports = {
       moderatorId: message.author.id,
       moderatorTag: message.author.tag,
       reason: reason,
-      date: new Date().toLocaleString(),
+      date: Math.floor(Date.now() / 1000),
     };
 
     warns[guildId][member.id].push(warnEntry);
@@ -104,7 +111,8 @@ module.exports = {
       .addFields(
         { name: "User", value: `${member.user.tag}`, inline: true },
         { name: "Warned By", value: `${message.author.tag}`, inline: true },
-        { name: "Reason", value: reason }
+        { name: "Reason", value: reason },
+        { name: "When", value: renderDate(warnEntry.date), inline: true }
       )
       .setTimestamp();
 
