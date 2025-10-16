@@ -35,7 +35,7 @@ module.exports = {
       const description = pageEntries
         .map((entry, index) => {
           const member = guildMembers.get(entry.id);
-          return `**${start + index + 1}. ${member ? member.user.username : "Unknown"}** - ${entry.points} 🪙`;
+          return `**${start + index + 1}. ${member ? member.user.username : "Unknown"}** - ${entry.points}`;
         })
         .join("\n");
 
@@ -43,7 +43,7 @@ module.exports = {
         .setTitle(`🎣 Fish Leaderboard - ${message.guild.name}`)
         .setDescription(description || "No entries on this page.")
         .setFooter({ text: `Page ${page + 1} of ${totalPages}` })
-        .setColor(0x008080)
+        .setColor(8388736)
         .setTimestamp();
     };
 
