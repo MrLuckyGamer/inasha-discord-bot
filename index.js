@@ -70,7 +70,7 @@ client.on("guildMemberRemove", member => updateStats(member.guild));
 client.on("channelCreate", channel => updateStats(channel.guild));
 client.on("channelDelete", channel => updateStats(channel.guild));
 
-client.once("clientReady", async () => {
+client.once("ready", async () => {
   let totalUsers = 0;
   let totalChannels = 0;
 
