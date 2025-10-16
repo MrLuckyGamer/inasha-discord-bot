@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require("discord.js");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -17,9 +17,15 @@ module.exports = {
       .setDescription(`[Click here to invite me](${inviteUrl})`)
       .setColor(8388736)
       .setThumbnail(client.user.displayAvatarURL({ size: 512 }))
-      .setFooter({ text: `Owner: ${owner.tag}`, iconURL: owner.displayAvatarURL({ dynamic: true }) })
+      .setFooter({
+        text: `Owner: ${owner.tag}`,
+        iconURL: owner.displayAvatarURL({ dynamic: true }),
+      })
       .setTimestamp();
 
-    await interaction.reply({ embeds: [embed], ephemeral: false });
+    await interaction.reply({
+      embeds: [embed],
+      flags: 0, // public reply (non-ephemeral)
+    });
   },
 };

@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, Collection, EmbedBuilder, REST, Routes } = require("discord.js");
+const { Client, GatewayIntentBits, Collection, EmbedBuilder, REST, Routes, MessageFlags, Partials, } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
 const config = require("./config.json");
@@ -12,7 +12,7 @@ const client = new Client({
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.DirectMessages,
   ],
-  partials: ["CHANNEL"], // Needed to receive DMs
+  partials: [Partials.Channel], // Required for DMs
 });
 
 // === Command Loading ===
@@ -21,7 +21,7 @@ client.slashCommands = new Collection();
 
 // Prefix Commands
 const commandsPath = path.join(__dirname, "commands");
-const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith(".js"));
+const commandFiles = fs.readdirSync(commandsPath).filter(f => f.endsWith(".js"));
 for (const file of commandFiles) {
   const command = require(`./commands/${file}`);
   client.commands.set(command.name, command);
@@ -31,7 +31,7 @@ for (const file of commandFiles) {
 const slashPath = path.join(__dirname, "slash-commands");
 const slashJSON = [];
 const slashFiles = fs.existsSync(slashPath)
-  ? fs.readdirSync(slashPath).filter(file => file.endsWith(".js"))
+  ? fs.readdirSync(slashPath).filter(f => f.endsWith(".js"))
   : [];
 
 for (const file of slashFiles) {
@@ -51,14 +51,14 @@ const rest = new REST({ version: "10" }).setToken(config.token);
     const existingGlobal = await rest.get(Routes.applicationCommands(config.clientId));
     for (const cmd of existingGlobal) {
       if (!slashJSON.some(c => c.name === cmd.name)) {
-        console.log(`Deleting old global slash commands: ${cmd.name}`);
+        console.log(`Deleting old global slash command: ${cmd.name}`);
         await rest.delete(Routes.applicationCommand(config.clientId, cmd.id));
       }
     }
 
-    // Register new ones
+    // Register new slash commands
     await rest.put(Routes.applicationCommands(config.clientId), { body: slashJSON });
-    console.log("Global slash commands registered successfully (DMs + servers).");
+    console.log("Global slash commands registered successfully (usable in DMs + servers).");
   } catch (error) {
     console.error("Failed to update slash commands:", error);
   }
@@ -93,14 +93,14 @@ client.once("clientReady", async () => {
       {
         name: `${config.prefix}help`,
         type: 1, // 0 = Playing, 1 = Streaming, 2 = Listening, 3 = Watching, 4 = Custom
-        url: "https://twitch.tv/femboyyluckyy" // Only needed if type is 1 (Streaming)
-      }
-    ]
+        url: "https://twitch.tv/femboyyluckyy", // Only needed if type is 1 (Streaming)
+      },
+    ],
   });
 
   const statsFile = "./data/serverstats/serverstats.json";
   if (fs.existsSync(statsFile)) {
-    const statsData = JSON.parse(fs.readFileSync(statsFile));
+    const statsData = JSON.parse(fs.readFileSync(statsFile, "utf8"));
     for (const guildId of Object.keys(statsData)) {
       const guild = client.guilds.cache.get(guildId);
       if (guild) await updateStats(guild);
@@ -113,7 +113,7 @@ client.once("clientReady", async () => {
 });
 
 // === Prefix Commands ===
-client.on("messageCreate", async (message) => {
+client.on("messageCreate", async message => {
   if (message.author.bot) return;
   const prefix = config.prefix.toLowerCase();
   const content = message.content.toLowerCase();
@@ -133,26 +133,15 @@ client.on("messageCreate", async (message) => {
 });
 
 // === Fun Responses ===
-client.on("messageCreate", (message) => {
+client.on("messageCreate", message => {
   if (message.author.bot) return;
-
   const lower = message.content.toLowerCase();
 
   if (lower.includes("meow")) {
     const responses = [
-      "Meow! 🐱",
-      "😺 Meow meow!",
-      "Mew~", "Purr~ 😻",
-      "Nya~ ✨",
-      "Meeew!",
-      "Mrowww 🐈",
-      "*eepy meow...* 💤",
-      "MEOW!!",
-      "UwU nya~",
-      "🐾 *pounces on you* meow!",
-      "Mrrrp!",
-      "Myaa~ 🌸",
-      "Mrow? 🐱"
+      "Meow! 🐱", "😺 Meow meow!", "Mew~", "Purr~ 😻", "Nya~ ✨",
+      "Meeew!", "Mrowww 🐈", "*eepy meow...* 💤", "MEOW!!",
+      "UwU nya~", "🐾 *pounces on you* meow!", "Mrrrp!", "Myaa~ 🌸", "Mrow? 🐱",
     ];
     message.channel.send(responses[Math.floor(Math.random() * responses.length)]);
   }
@@ -160,32 +149,21 @@ client.on("messageCreate", (message) => {
   const dogWords = ["woof", "bark", "bork", "ruff", "arf"];
   if (dogWords.some(word => lower.includes(word))) {
     const responses = [
-      "Woof! 🐶",
-      "Bark bark! 🐾",
-      "bork bork! 🐕",
-      "Arf arf!",
-      "Ruff~ 🐕",
-      "Woooof! 😄",
-      "🐕 *wags tail excitedly*",
-      "Grr... just kidding! 🐶❤️",
-      "*tilts head* arf?",
-      "Awoo~ 🌕🐺",
-      "*runs in circles* WOOF!",
-      "Borf borf! 🐾",
-      "🐶 *gives you a slobbery kiss*",
-      "Wag wag wag! 🦴",
-      "Ruff ruff!!",
-      "🐕‍🦺 *sits like a good boi*"
+      "Woof! 🐶", "Bark bark! 🐾", "bork bork! 🐕", "Arf arf!", "Ruff~ 🐕",
+      "Woooof! 😄", "🐕 *wags tail excitedly*", "Grr... just kidding! 🐶❤️",
+      "*tilts head* arf?", "Awoo~ 🌕🐺", "*runs in circles* WOOF!",
+      "Borf borf! 🐾", "🐶 *gives you a slobbery kiss*", "Wag wag wag! 🦴",
+      "Ruff ruff!!", "🐕‍🦺 *sits like a good boi*",
     ];
     message.channel.send(responses[Math.floor(Math.random() * responses.length)]);
   }
 });
 
-// === Funny thing for Friends Server (specific guild only) ===
+// === Funny Guild-only Filter ===
 const TARGET_GUILD_ID = "1179224793078300672";
 const bannedWords = ["nig", "nigga", "nigger", "fag", "faggot"];
 
-client.on("messageCreate", async (message) => {
+client.on("messageCreate", async message => {
   if (message.author.bot) return;
   if (message.guild?.id !== TARGET_GUILD_ID) return;
 
@@ -203,7 +181,7 @@ client.on("messageCreate", async (message) => {
 });
 
 // === Slash Command Execution ===
-client.on("interactionCreate", async (interaction) => {
+client.on("interactionCreate", async interaction => {
   if (!interaction.isChatInputCommand()) return;
   const command = client.slashCommands.get(interaction.commandName);
   if (!command) return;
@@ -214,13 +192,13 @@ client.on("interactionCreate", async (interaction) => {
     console.error(error);
     await interaction.reply({
       content: "There was an error executing this command.",
-      flags: require("discord.js").MessageFlags.Ephemeral,
+      flags: MessageFlags.Ephemeral,
     });
   }
 });
 
 // === Log server join/leave ===
-client.on("guildCreate", (guild) => {
+client.on("guildCreate", guild => {
   console.log("====================================");
   console.log(`Added to: ${guild.name} (ID: ${guild.id})`);
   console.log(`Members: ${guild.memberCount}`);
@@ -228,7 +206,7 @@ client.on("guildCreate", (guild) => {
   console.log("====================================");
 });
 
-client.on("guildDelete", (guild) => {
+client.on("guildDelete", guild => {
   console.log("====================================");
   console.log(`Removed from: ${guild.name} (ID: ${guild.id})`);
   console.log(`Total Servers: ${client.guilds.cache.size}`);
