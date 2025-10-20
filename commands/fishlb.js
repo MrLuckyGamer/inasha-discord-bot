@@ -55,7 +55,7 @@ module.exports = {
 
     const nextButton = new ButtonBuilder()
       .setCustomId("next")
-      .setLabel("⏭️ Next")
+      .setLabel("Next ⏭️")
       .setStyle(ButtonStyle.Secondary)
       .setDisabled(totalPages <= 1);
 
