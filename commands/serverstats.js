@@ -2,12 +2,15 @@ const { ChannelType, PermissionFlagsBits } = require("discord.js");
 const fs = require("fs");
 
 const file = "./data/serverstats/serverstats.json";
-let statsChannels = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file)) : {};
+let statsChannels = fs.existsSync(file)
+  ? JSON.parse(fs.readFileSync(file))
+  : {};
 
 module.exports = {
   name: "serverstats",
   description: "Enable or disable server statistics channels.",
   category: "Utility",
+
   async execute(message, args) {
     if (!message.member.permissions.has(PermissionFlagsBits.ManageGuild)) {
       return message.reply("You need **Manage Server** permission to use this command.");
@@ -54,7 +57,7 @@ module.exports = {
       saveStats();
       await updateStats(message.guild);
 
-      message.reply("Server stats have been enabled!");
+      return message.reply("Server stats have been enabled!");
     }
 
     else if (sub === "disable") {
@@ -63,7 +66,8 @@ module.exports = {
 
       const category = message.guild.channels.cache.get(data.category);
       if (category) await category.delete().catch(() => {});
-      Object.values(data).forEach(async (id) => {
+
+      Object.values(data).forEach(async id => {
         const ch = message.guild.channels.cache.get(id);
         if (ch) await ch.delete().catch(() => {});
       });
@@ -71,12 +75,10 @@ module.exports = {
       delete statsChannels[message.guild.id];
       saveStats();
 
-      message.reply("Server stats have been disabled and removed.");
+      return message.reply("Server stats have been disabled and removed.");
     }
 
-    else {
-      message.reply("Usage: `i>serverstats enable` or `i>serverstats disable`");
-    }
+    return message.reply("Usage: `i>serverstats enable` or `i>serverstats disable`");
   },
 };
 
@@ -88,11 +90,8 @@ async function updateStats(guild) {
   const data = statsChannels[guild.id];
   if (!data) return;
 
-  await guild.members.fetch();
-
-  const members = guild.members.cache;
-  const users = members.filter(m => !m.user.bot).size;
-  const bots = members.filter(m => m.user.bot).size;
+  const users = guild.memberCount;
+  const bots = guild.members.cache.filter(m => m.user.bot).size;
   const channels = guild.channels.cache.filter(ch => ch.type !== ChannelType.GuildCategory).size;
 
   const updateChannel = (id, name) => {
