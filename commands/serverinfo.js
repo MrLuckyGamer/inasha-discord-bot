@@ -1,5 +1,4 @@
 const { EmbedBuilder, ChannelType } = require("discord.js");
-const { getBotCount } = require("./serverstats.js");
 
 module.exports = {
   name: "serverinfo",
@@ -9,10 +8,9 @@ module.exports = {
     const guild = message.guild;
     if (!guild) return message.reply("This command can only be used in a server.");
 
-    const bots = await getBotCount(guild).catch(() => 0);
-    const users = Math.max(0, guild.memberCount - bots);
+    const humanCount = guild.members.cache.filter(m => !m.user.bot).size;
 
-    const totalChannels = guild.channels.cache.filter(ch => 
+    const totalChannels = guild.channels.cache.filter(ch =>
       ch.type === ChannelType.GuildText || ch.type === ChannelType.GuildVoice
     ).size;
 
@@ -21,7 +19,7 @@ module.exports = {
       .setThumbnail(guild.iconURL({ dynamic: true }))
       .addFields(
         { name: "Owner", value: `<@${guild.ownerId}>`, inline: true },
-        { name: "Members", value: `${users}`, inline: true },
+        { name: "Members", value: `${humanCount}`, inline: true },
         { name: "Channels", value: `${totalChannels}`, inline: true },
         { name: "Roles", value: `${guild.roles.cache.size}`, inline: true },
         { name: "Boosts", value: `${guild.premiumSubscriptionCount}`, inline: true },
