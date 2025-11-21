@@ -12,14 +12,14 @@ const client = new Client({
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.DirectMessages,
   ],
-  partials: [Partials.Channel], // Required for DMs
+  partials: [Partials.Channel],
 });
 
-// === Command Loading ===
+// === Command Collections ===
 client.commands = new Collection();
 client.slashCommands = new Collection();
 
-// Prefix Commands
+// === Load Prefix Commands ===
 const commandsPath = path.join(__dirname, "commands");
 const commandFiles = fs.readdirSync(commandsPath).filter(f => f.endsWith(".js"));
 for (const file of commandFiles) {
@@ -27,7 +27,7 @@ for (const file of commandFiles) {
   client.commands.set(command.name, command);
 }
 
-// Slash Commands
+// === Load Slash Commands ===
 const slashPath = path.join(__dirname, "slash-commands");
 const slashJSON = [];
 const slashFiles = fs.existsSync(slashPath)
@@ -47,8 +47,8 @@ const rest = new REST({ version: "10" }).setToken(config.token);
   try {
     console.log("Cleaning and registering global slash commands...");
 
-    // Delete old global commands not in slashJSON
     const existingGlobal = await rest.get(Routes.applicationCommands(config.clientId));
+
     for (const cmd of existingGlobal) {
       if (!slashJSON.some(c => c.name === cmd.name)) {
         console.log(`Deleting old global slash command: ${cmd.name}`);
@@ -56,27 +56,26 @@ const rest = new REST({ version: "10" }).setToken(config.token);
       }
     }
 
-    // Register new slash commands
     await rest.put(Routes.applicationCommands(config.clientId), { body: slashJSON });
-    console.log("Global slash commands registered successfully (usable in DMs + servers).");
+    console.log("Global slash commands registered successfully.");
   } catch (error) {
     console.error("Failed to update slash commands:", error);
   }
 })();
 
-// === Event Handlers ===
+// === Server Join / Leave Stats ===
 client.on("guildMemberAdd", member => updateStats(member.guild));
 client.on("guildMemberRemove", member => updateStats(member.guild));
 client.on("channelCreate", channel => updateStats(channel.guild));
 client.on("channelDelete", channel => updateStats(channel.guild));
 
-client.once("clientReady", async () => {
+// === Ready Event ===
+client.once("ready", async () => {
   let totalUsers = 0;
   let totalChannels = 0;
 
   for (const guild of client.guilds.cache.values()) {
-    await guild.members.fetch();
-    totalUsers += guild.members.cache.filter(m => !m.user.bot).size;
+    totalUsers += guild.memberCount;
     totalChannels += guild.channels.cache.size;
   }
 
@@ -98,6 +97,7 @@ client.once("clientReady", async () => {
     ],
   });
 
+  // Load previous stats
   const statsFile = "./data/serverstats/serverstats.json";
   if (fs.existsSync(statsFile)) {
     const statsData = JSON.parse(fs.readFileSync(statsFile, "utf8"));
@@ -112,71 +112,62 @@ client.once("clientReady", async () => {
   }, 10 * 60 * 1000);
 });
 
-// === Prefix Commands ===
+// === Message Handler (Prefix + Fun Responses + Filters) ===
 client.on("messageCreate", async message => {
   if (message.author.bot) return;
-  const prefix = config.prefix.toLowerCase();
-  const content = message.content.toLowerCase();
-  if (!content.startsWith(prefix)) return;
 
-  const args = message.content.slice(config.prefix.length).trim().split(/ +/);
-  const commandName = args.shift().toLowerCase();
-  const command = client.commands.get(commandName);
-  if (!command) return;
-
-  try {
-    await command.execute(message, args, client);
-  } catch (error) {
-    console.error(error);
-    message.reply("There was an error executing that command.");
-  }
-});
-
-// === Fun Responses ===
-client.on("messageCreate", message => {
-  if (message.author.bot) return;
   const lower = message.content.toLowerCase();
+  const prefix = config.prefix.toLowerCase();
 
+  // === Prefix Commands ===
+  if (lower.startsWith(prefix)) {
+    const args = message.content.slice(prefix.length).trim().split(/ +/);
+    const commandName = args.shift().toLowerCase();
+    const command = client.commands.get(commandName);
+    if (command) {
+      try {
+        await command.execute(message, args, client);
+      } catch (error) {
+        console.error(error);
+        message.reply("There was an error executing that command.");
+      }
+    }
+  }
+
+  // === Fun Cat Responses ===
   if (lower.includes("meow")) {
     const responses = [
       "Meow! 🐱", "😺 Meow meow!", "Mew~", "Purr~ 😻", "Nya~ ✨",
-      "Meeew!", "Mrowww 🐈", "*eepy meow...* 💤", "MEOW!!",
-      "UwU nya~", "🐾 *pounces on you* meow!", "Mrrrp!", "Myaa~ 🌸", "Mrow? 🐱",
+      "*eepy meow...* 💤", "MEOW!!", "🐾 *pounces on you* meow!"
     ];
-    message.channel.send(responses[Math.floor(Math.random() * responses.length)]);
+    return message.channel.send(responses[Math.floor(Math.random() * responses.length)]);
   }
 
+  // === Dog Responses ===
   const dogWords = ["woof", "bark", "bork", "ruff", "arf"];
   if (dogWords.some(word => lower.includes(word))) {
     const responses = [
-      "Woof! 🐶", "Bark bark! 🐾", "bork bork! 🐕", "Arf arf!", "Ruff~ 🐕",
-      "Woooof! 😄", "🐕 *wags tail excitedly*", "Grr... just kidding! 🐶❤️",
-      "*tilts head* arf?", "Awoo~ 🌕🐺", "*runs in circles* WOOF!",
-      "Borf borf! 🐾", "🐶 *gives you a slobbery kiss*", "Wag wag wag! 🦴",
-      "Ruff ruff!!", "🐕‍🦺 *sits like a good boi*",
+      "Woof! 🐶", "Bark bark! 🐾", "bork bork!", "Ruff~ 🐕",
+      "*wags tail excitedly*", "🐶 *gives you a slobbery kiss*"
     ];
-    message.channel.send(responses[Math.floor(Math.random() * responses.length)]);
+    return message.channel.send(responses[Math.floor(Math.random() * responses.length)]);
   }
-});
 
-// === Funny Guild-only Filter ===
-const TARGET_GUILD_ID = "1179224793078300672";
-const bannedWords = ["nig", "nigga", "nigger", "fag", "faggot"];
+  // === Guild-only Slur Filter ===
+  const TARGET_GUILD_ID = "1179224793078300672";
+  const bannedWords = ["nig", "fag", "faggot", "nigger", "nigga"];
 
-client.on("messageCreate", async message => {
-  if (message.author.bot) return;
-  if (message.guild?.id !== TARGET_GUILD_ID) return;
+  if (message.guild?.id === TARGET_GUILD_ID) {
+    if (bannedWords.some(word => new RegExp(`\\b${word}\\b`, "i").test(lower))) {
+      const embed = new EmbedBuilder()
+        .setColor("Red")
+        .setTitle("🚨 Slur Detected!")
+        .setDescription(`${message.author} watch your language!`)
+        .setImage("https://i.imgur.com/0bkSmUl.png")
+        .setTimestamp();
 
-  const content = message.content.toLowerCase();
-  const isBanned = bannedWords.some(word => new RegExp(`\\b${word}\\b`, "i").test(content));
-  if (isBanned) {
-    const embed = new EmbedBuilder()
-      .setColor("Red")
-      .setTitle("🚨 Slur Detected!")
-      .setDescription(`${message.author} watch your language!`)
-      .setImage("https://i.imgur.com/0bkSmUl.png")
-      .setTimestamp();
-    await message.channel.send({ embeds: [embed] });
+      return message.channel.send({ embeds: [embed] });
+    }
   }
 });
 
