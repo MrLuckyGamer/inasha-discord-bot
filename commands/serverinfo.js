@@ -1,5 +1,5 @@
 const { EmbedBuilder, ChannelType } = require("discord.js");
-const { getBotCount } = require("./commands/serverstats.js");
+const { getBotCount } = require("./serverstats.js");
 
 module.exports = {
   name: "serverinfo",
