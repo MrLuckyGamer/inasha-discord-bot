@@ -89,34 +89,24 @@ function saveStats() {
   fs.writeFileSync(file, JSON.stringify(statsChannels, null, 2));
 }
 
+// === GET BOT COUNT ===
 async function getBotCount(guild) {
-  let bots = 0;
-  let after;
-
-  while (true) {
-    const members = await guild.members.list({ limit: 1000, after }).catch(() => null);
-    if (!members || members.size === 0) break;
-
-    bots += members.filter(m => m.user.bot).size;
-    after = members.last().id;
-
-    if (members.size < 1000) break;
-  }
-
-  return bots;
+  await guild.members.fetch();
+  return guild.members.cache.filter(m => m.user.bot).size;
 }
 
-// === Update stats ===
+// === UPDATE STATS ===
 async function updateStats(guild) {
   const data = statsChannels[guild.id];
   if (!data) return;
 
   const bots = await getBotCount(guild).catch(() => 0);
-
   const total = typeof guild.memberCount === "number" ? guild.memberCount : 0;
   const users = Math.max(0, total - bots);
 
-  const channels = guild.channels.cache.filter(ch => ch.type !== ChannelType.GuildCategory).size;
+  const channels = guild.channels.cache.filter(ch => 
+    ch.type === ChannelType.GuildText || ch.type === ChannelType.GuildVoice
+  ).size;
 
   const updateChannel = (id, name) => {
     const ch = guild.channels.cache.get(id);
@@ -131,4 +121,6 @@ async function updateStats(guild) {
   if (category) category.setPosition(0).catch(() => {});
 }
 
+// === EXPORTS ===
 module.exports.updateStats = updateStats;
+module.exports.getBotCount = getBotCount;
