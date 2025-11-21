@@ -2,9 +2,7 @@ const { ChannelType, PermissionFlagsBits } = require("discord.js");
 const fs = require("fs");
 
 const file = "./data/serverstats/serverstats.json";
-let statsChannels = fs.existsSync(file)
-  ? JSON.parse(fs.readFileSync(file))
-  : {};
+let statsChannels = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : {};
 
 module.exports = {
   name: "serverstats",
@@ -18,6 +16,7 @@ module.exports = {
 
     const sub = args[0]?.toLowerCase();
 
+    // === ENABLE ===
     if (sub === "enable") {
       if (statsChannels[message.guild.id]) {
         return message.reply("Stats are already enabled in this server.");
@@ -60,6 +59,7 @@ module.exports = {
       return message.reply("Server stats have been enabled!");
     }
 
+    // === DISABLE ===
     else if (sub === "disable") {
       const data = statsChannels[message.guild.id];
       if (!data) return message.reply("Stats are not enabled in this server.");
@@ -67,10 +67,12 @@ module.exports = {
       const category = message.guild.channels.cache.get(data.category);
       if (category) await category.delete().catch(() => {});
 
-      Object.values(data).forEach(async id => {
+      for (const key of ["users", "bots", "channels"]) {
+        const id = data[key];
+        if (!id) continue;
         const ch = message.guild.channels.cache.get(id);
         if (ch) await ch.delete().catch(() => {});
-      });
+      }
 
       delete statsChannels[message.guild.id];
       saveStats();
@@ -82,16 +84,38 @@ module.exports = {
   },
 };
 
+// === SAVE FILE ===
 function saveStats() {
   fs.writeFileSync(file, JSON.stringify(statsChannels, null, 2));
 }
 
+async function getBotCount(guild) {
+  let bots = 0;
+  let after;
+
+  while (true) {
+    const members = await guild.members.list({ limit: 1000, after }).catch(() => null);
+    if (!members || members.size === 0) break;
+
+    bots += members.filter(m => m.user.bot).size;
+    after = members.last().id;
+
+    if (members.size < 1000) break;
+  }
+
+  return bots;
+}
+
+// === Update stats ===
 async function updateStats(guild) {
   const data = statsChannels[guild.id];
   if (!data) return;
 
-  const users = guild.memberCount;
-  const bots = guild.members.cache.filter(m => m.user.bot).size;
+  const bots = await getBotCount(guild).catch(() => 0);
+
+  const total = typeof guild.memberCount === "number" ? guild.memberCount : 0;
+  const users = Math.max(0, total - bots);
+
   const channels = guild.channels.cache.filter(ch => ch.type !== ChannelType.GuildCategory).size;
 
   const updateChannel = (id, name) => {

@@ -21,23 +21,26 @@ client.slashCommands = new Collection();
 
 // === Load Prefix Commands ===
 const commandsPath = path.join(__dirname, "commands");
-const commandFiles = fs.readdirSync(commandsPath).filter(f => f.endsWith(".js"));
-for (const file of commandFiles) {
-  const command = require(`./commands/${file}`);
-  client.commands.set(command.name, command);
+if (fs.existsSync(commandsPath)) {
+  const commandFiles = fs.readdirSync(commandsPath).filter(f => f.endsWith(".js"));
+  for (const file of commandFiles) {
+    const command = require(`./commands/${file}`);
+    if (command?.name) client.commands.set(command.name, command);
+  }
 }
 
 // === Load Slash Commands ===
 const slashPath = path.join(__dirname, "slash-commands");
 const slashJSON = [];
-const slashFiles = fs.existsSync(slashPath)
-  ? fs.readdirSync(slashPath).filter(f => f.endsWith(".js"))
-  : [];
-
-for (const file of slashFiles) {
-  const command = require(`./slash-commands/${file}`);
-  client.slashCommands.set(command.data.name, command);
-  slashJSON.push(command.data.toJSON());
+if (fs.existsSync(slashPath)) {
+  const slashFiles = fs.readdirSync(slashPath).filter(f => f.endsWith(".js"));
+  for (const file of slashFiles) {
+    const command = require(`./slash-commands/${file}`);
+    if (command?.data) {
+      client.slashCommands.set(command.data.name, command);
+      slashJSON.push(command.data.toJSON());
+    }
+  }
 }
 
 // === Register Global Slash Commands ===
@@ -63,53 +66,72 @@ const rest = new REST({ version: "10" }).setToken(config.token);
   }
 })();
 
-// === Server Join / Leave Stats ===
-client.on("guildMemberAdd", member => updateStats(member.guild));
-client.on("guildMemberRemove", member => updateStats(member.guild));
-client.on("channelCreate", channel => updateStats(channel.guild));
-client.on("channelDelete", channel => updateStats(channel.guild));
+client.on("guildMemberAdd", member => {
+  try { updateStats(member.guild); } catch (e) { console.error(e); }
+});
+
+client.on("guildMemberRemove", member => {
+  try { updateStats(member.guild); } catch (e) { console.error(e); }
+});
+
+client.on("channelCreate", channel => {
+  if (!channel.guild) return;
+  try { updateStats(channel.guild); } catch (e) { console.error(e); }
+});
+
+client.on("channelDelete", channel => {
+  if (!channel.guild) return;
+  try { updateStats(channel.guild); } catch (e) { console.error(e); }
+});
 
 // === Ready Event ===
 client.once("clientReady", async () => {
-  let totalUsers = 0;
-  let totalChannels = 0;
+  try {
+    let totalUsers = 0;
+    let totalChannels = 0;
 
-  for (const guild of client.guilds.cache.values()) {
-    totalUsers += guild.memberCount;
-    totalChannels += guild.channels.cache.size;
-  }
-
-  console.log("==========================");
-  console.log(`Logged in as ${client.user.tag}`);
-  console.log(`Serving in ${client.guilds.cache.size} servers`);
-  console.log(`Watching over ${totalUsers} users`);
-  console.log(`Monitoring ${totalChannels} channels`);
-  console.log("==========================");
-
-  client.user.setPresence({
-    status: "online", // online, idle, dnd, invisible
-    activities: [
-      {
-        name: `${config.prefix}help`,
-        type: 1, // 0 = Playing, 1 = Streaming, 2 = Listening, 3 = Watching, 4 = Custom
-        url: "https://twitch.tv/femboyyluckyy", // Only needed if type is 1 (Streaming)
-      },
-    ],
-  });
-
-  // Load previous stats
-  const statsFile = "./data/serverstats/serverstats.json";
-  if (fs.existsSync(statsFile)) {
-    const statsData = JSON.parse(fs.readFileSync(statsFile, "utf8"));
-    for (const guildId of Object.keys(statsData)) {
-      const guild = client.guilds.cache.get(guildId);
-      if (guild) await updateStats(guild);
+    for (const guild of client.guilds.cache.values()) {
+      totalUsers += guild.memberCount;
+      totalChannels += guild.channels.cache.size;
     }
-  }
 
-  setInterval(() => {
-    client.guilds.cache.forEach(guild => updateStats(guild));
-  }, 10 * 60 * 1000);
+    console.log("==========================");
+    console.log(`Logged in as ${client.user.tag}`);
+    console.log(`Serving in ${client.guilds.cache.size} servers`);
+    console.log(`Watching over ${totalUsers} users`);
+    console.log(`Monitoring ${totalChannels} channels`);
+    console.log("==========================");
+
+    client.user.setPresence({
+      status: "online", // online, idle, dnd, invisible
+      activities: [
+        {
+          name: `${config.prefix}help`,
+          type: 1, // 0 = Playing, 1 = Streaming, 2 = Listening, 3 = Watching, 4 = Custom
+          url: "https://twitch.tv/femboyyluckyy", // Only needed if type is 1 (Streaming)
+        },
+      ],
+    });
+
+    const statsFile = "./data/serverstats/serverstats.json";
+    if (fs.existsSync(statsFile)) {
+      const statsData = JSON.parse(fs.readFileSync(statsFile, "utf8"));
+      for (const guildId of Object.keys(statsData)) {
+        const guild = client.guilds.cache.get(guildId);
+        if (guild) {
+          await updateStats(guild);
+        }
+      }
+    }
+
+    setInterval(() => {
+      client.guilds.cache.forEach(guild => {
+        try { updateStats(guild); } catch (e) { console.error(e); }
+      });
+    }, 10 * 60 * 1000);
+  } catch (err) {
+    console.error("Error during ready handler:", err);
+  }
 });
 
 // === Message Handler (Prefix + Fun Responses + Filters) ===
