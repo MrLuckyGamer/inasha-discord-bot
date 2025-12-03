@@ -77,6 +77,7 @@ client.on("guildMemberRemove", m => updateStats(m.guild));
 client.on("channelCreate", ch => ch.guild && updateStats(ch.guild));
 client.on("channelDelete", ch => ch.guild && updateStats(ch.guild));
 
+client.once("clientReady", () => {
   try {
     console.log("==========================");
     console.log(`Logged in as ${client.user.tag}`);
