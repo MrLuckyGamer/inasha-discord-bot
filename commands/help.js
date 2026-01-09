@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-const config = require("../config.json");
+const prefix = process.env.prefix || "i>";
 
 module.exports = {
   name: "help",
@@ -12,7 +12,7 @@ module.exports = {
     client.commands.forEach(cmd => {
       const category = cmd.category || "Uncategorized";
       if (!categories[category]) categories[category] = [];
-      categories[category].push(`\`${config.prefix}${cmd.name}\` - ${cmd.description}`);
+      categories[category].push(`\`${prefix}${cmd.name}\` - ${cmd.description}`);
     });
 
     const embed = new EmbedBuilder()

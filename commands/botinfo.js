@@ -1,6 +1,6 @@
 const { EmbedBuilder, ChannelType } = require("discord.js");
-const config = require("../config.json");
 const { version: botVersion } = require("../package.json");
+const prefix = process.env.prefix || "i>";
 
 module.exports = {
   name: "botinfo",
@@ -31,7 +31,7 @@ module.exports = {
         { name: "Servers", value: `${client.guilds.cache.size}`, inline: true },
         { name: "Users", value: `${totalUsers}`, inline: true },
         { name: "Channels", value: `${totalChannels}`, inline: true },
-        { name: "Prefix", value: `\`${config.prefix}\``, inline: true },
+        { name: "Prefix", value: `\`${prefix}\``, inline: true },
         { name: "Version", value: botVersion, inline: true },
         { name: "Node.js", value: process.version, inline: true },
         { name: "Discord.js", value: `v${require("discord.js").version}`, inline: true },
