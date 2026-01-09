@@ -1,7 +1,12 @@
 const { Client, GatewayIntentBits, Collection, EmbedBuilder, REST, Routes, MessageFlags, Partials, } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
-const config = require("./config.json");
+const config = {
+  token: process.env.token,
+  prefix: process.env.prefix,
+  clientId: process.env.clientId,
+  guildId: process.env.guildId
+};
 const { updateStats } = require("./commands/serverstats.js");
 
 const client = new Client({
