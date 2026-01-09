@@ -17,7 +17,7 @@
 - Auto-responses for messages containing "meow" and dog words ("woof", "bark", etc.)  
 - Slash command support + automatic global slash command registration/cleanup  
 - Logs guild add/remove events to console  
-- Configurable via `config.json` or env vars
+- Configurable via environment variables (recommended) or `config.json`
 
 ---
 
@@ -60,16 +60,34 @@ npm install
 ```
 
 ### Configuration
-Create a `config.json` in the project root (example below) **or** use environment variables (`DISCORD_TOKEN`, `CLIENT_ID`, `PREFIX`).
 
-`config.json` example:
+**Option 1: Environment Variables (Recommended for Production)**
+
+Set the following environment variables:
+```bash
+token=YOUR_BOT_TOKEN
+prefix=i>
+clientId=YOUR_CLIENT_ID
+guildId=YOUR_GUILD_ID
+NODE_ENV=production
+PORT=3000
+```
+
+For Dokploy or similar deployment platforms, add these in the environment variables section.
+
+**Option 2: config.json (Local Development)**
+
+Create a `config.json` in the project root:
 ```json
 {
   "token": "YOUR_BOT_TOKEN",
   "prefix": "i>",
-  "clientId": "YOUR_CLIENT_ID"
+  "clientId": "YOUR_CLIENT_ID",
+  "guildId": "YOUR_GUILD_ID"
 }
 ```
+
+**Note:** The bot will use environment variables if available, making it easy to deploy without committing sensitive tokens.
 
 ### Run
 ```bash
@@ -79,6 +97,35 @@ Dev (auto-restart with nodemon):
 ```bash
 npm run dev
 ```
+
+---
+
+## Deployment
+
+### Dokploy / Cloud Deployment
+1. Push your code to a Git repository
+2. In Dokploy, create a new application and connect your repository
+3. Add the following environment variables in Dokploy:
+   ```
+   token=YOUR_BOT_TOKEN
+   prefix=i>
+   clientId=YOUR_CLIENT_ID
+   guildId=YOUR_GUILD_ID
+   NODE_ENV=production
+   PORT=3000
+   ```
+4. Deploy and the bot will automatically use the environment variables
+
+### PM2 (Process Manager)
+For long-running deployments using PM2:
+```bash
+npm install -g pm2
+pm2 start index.js --name inasha-bot
+pm2 save
+```
+
+### Docker
+You can also containerise the bot using Docker with environment variables passed at runtime.
 
 ---
 
@@ -117,19 +164,8 @@ git push origin feature/your-feature
 
 ---
 
-## Environment / Deployment tips
-- Use environment variables in production rather than committing `config.json`.
-- For long-running deployments use PM2, Docker, or a cloud provider. Example with PM2:
-```bash
-npm install -g pm2
-pm2 start index.js --name inasha-bot
-pm2 save
-```
-
----
-
 ## File / Code notes (based on your repo)
-- `index.js` — main entry, sets up client, loads command files, registers slash commands, event listeners, presence, and periodic stats update.
+- `index.js` — main entry, sets up client, loads command files, registers slash commands, event listeners, presence, and periodic stats update. Configured to read from environment variables for production deployment.
 - `commands/` — prefix command files loaded as `client.commands`.
 - `slash-commands/` — slash command modules loaded into `client.slashCommands` and registered via REST.
 - `./commands/serverstats.js` (or similar) — contains `updateStats(guild)` used to create/update stat channels.
@@ -138,9 +174,11 @@ pm2 save
 ---
 
 ## Troubleshooting
-- If slash commands don't appear: ensure the bot has `applications.commands` scope and the `clientId` is correct. Global command changes can take up to an hour to propagate.
-- If stats channels fail to update: confirm the bot has `Manage Channels` permission and the target guild exists in cache.
-- Check bot log output (console) for errors on startup; missing or invalid `config.json` / token will prevent login.
+- **Environment variables not loading:** Ensure your deployment platform correctly sets the environment variables. Check logs for missing token/clientId errors.
+- **Slash commands don't appear:** Ensure the bot has `applications.commands` scope and the `clientId` is correct. Global command changes can take up to an hour to propagate.
+- **Stats channels fail to update:** Confirm the bot has `Manage Channels` permission and the target guild exists in cache.
+- **Bot won't start:** Check console output for errors. Missing or invalid token/clientId will prevent login.
+- **Config.json vs Environment Variables:** If both exist, environment variables take precedence. For production, use environment variables only.
 
 ---
 
