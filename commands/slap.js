@@ -20,7 +20,7 @@ module.exports = {
     const gif = slapGifs[Math.floor(Math.random() * slapGifs.length)];
 
     const embed = new EmbedBuilder()
-      .setColor(8388736)
+      .setColor(6086089)
       .setTitle(`${message.author.username} slapped ${user.username}! 👋`)
       .setImage(gif)
       .setTimestamp();

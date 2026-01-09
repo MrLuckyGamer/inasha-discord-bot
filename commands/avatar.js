@@ -21,7 +21,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle(`${user.username}'s Avatar`)
       .setImage(user.displayAvatarURL({ size: 1024, dynamic: true }))
-      .setColor(8388736)
+      .setColor(6086089)
       .setFooter({ text: `Requested by ${message.author.tag}` })
       .setTimestamp();
 

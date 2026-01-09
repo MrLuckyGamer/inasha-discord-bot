@@ -48,7 +48,7 @@ module.exports = {
         { name: "🧑‍🤝‍🧑 Siblings", value: siblings || "None" },
         { name: "👶 Children", value: children || "None" }
       )
-        .setColor(8388736)
+        .setColor(6086089)
         .setTimestamp()
         .setFooter({ text: "Family Tree System" });
 

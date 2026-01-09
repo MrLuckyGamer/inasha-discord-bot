@@ -23,7 +23,7 @@ module.exports = {
     const gif = hugGifs[Math.floor(Math.random() * hugGifs.length)];
 
     const embed = new EmbedBuilder()
-      .setColor(8388736)
+      .setColor(6086089)
       .setTitle(`${message.author.username} hugged ${user.username}! 🤗`)
       .setImage(gif)
       .setTimestamp();

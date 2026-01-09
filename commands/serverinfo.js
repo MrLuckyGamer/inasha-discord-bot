@@ -25,7 +25,7 @@ module.exports = {
         { name: "Boosts", value: `${guild.premiumSubscriptionCount}`, inline: true },
         { name: "Created On", value: `<t:${Math.floor(guild.createdTimestamp / 1000)}:D>`, inline: true }
       )
-      .setColor(8388736)
+      .setColor(6086089)
       .setTimestamp();
 
     return message.channel.send({ embeds: [embed] });

@@ -38,7 +38,7 @@ module.exports = {
         { name: "Created On", value: createdDate, inline: true },
         { name: "Owner", value: `<@320407113887252482>`, inline: true }
       )
-      .setColor(8388736)
+      .setColor(6086089)
       .setTimestamp();
 
     return message.channel.send({ embeds: [embed] });

@@ -16,7 +16,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle("Invite Me")
       .setDescription(`[Click here to invite me](${inviteUrl})`)
-      .setColor(8388736)
+      .setColor(6086089)
       .setThumbnail(client.user.displayAvatarURL({ size: 512 }))
       .setFooter({ text: `Owner: ${owner.tag}`, iconURL: owner.displayAvatarURL({ dynamic: true }) })
       .setTimestamp();

@@ -68,7 +68,7 @@ module.exports = {
       .setDescription(
         `You caught a **${caught.name}**!\nCoins Earned: **${points}**\nTotal Coins Earned: **${fishData[guildId][userId]}**`
       )
-      .setColor(8388736)
+      .setColor(6086089)
       .setTimestamp();
 
     message.channel.send({ embeds: [embed] });

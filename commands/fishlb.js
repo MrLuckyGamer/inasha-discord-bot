@@ -43,7 +43,7 @@ module.exports = {
         .setTitle(`🎣 Fish Leaderboard - ${message.guild.name}`)
         .setDescription(description || "No entries on this page.")
         .setFooter({ text: `Page ${page + 1} of ${totalPages}` })
-        .setColor(8388736)
+        .setColor(6086089)
         .setTimestamp();
     };
 

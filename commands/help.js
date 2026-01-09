@@ -17,7 +17,7 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setTitle("Help: List of Commands")
-      .setColor(8388736)
+      .setColor(6086089)
       .setTimestamp();
 
     for (const [category, cmds] of Object.entries(categories)) {

@@ -22,7 +22,7 @@ module.exports = {
     const gif = kissGifs[Math.floor(Math.random() * kissGifs.length)];
 
     const embed = new EmbedBuilder()
-      .setColor(8388736)
+      .setColor(6086089)
       .setTitle(`${message.author.username} kissed ${user.username}! 😘`)
       .setImage(gif)
       .setTimestamp();
