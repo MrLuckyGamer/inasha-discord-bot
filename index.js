@@ -26,12 +26,23 @@ client.slashCommands = new Collection();
 
 // === Load Prefix Commands ===
 const commandsPath = path.join(__dirname, "commands");
-if (fs.existsSync(commandsPath)) {
-  const commandFiles = fs.readdirSync(commandsPath).filter(f => f.endsWith(".js"));
-  for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
-    if (command?.name) client.commands.set(command.name, command);
+function loadCommands(dir) {
+  const files = fs.readdirSync(dir);
+  for (const file of files) {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+    if (stat.isDirectory()) {
+      loadCommands(filePath);
+    } else if (file.endsWith('.js')) {
+      const command = require(filePath);
+      if (command?.name) {
+        client.commands.set(command.name, command);
+      }
+    }
   }
+}
+if (fs.existsSync(commandsPath)) {
+  loadCommands(commandsPath);
 }
 
 // === Load Slash Commands ===
@@ -53,19 +64,15 @@ const rest = new REST({ version: "10" }).setToken(config.token);
 
 (async () => {
   try {
-    console.log("Cleaning and registering global slash commands...");
-
     const existingGlobal = await rest.get(Routes.applicationCommands(config.clientId));
 
     for (const cmd of existingGlobal) {
       if (!slashJSON.some(c => c.name === cmd.name)) {
-        console.log(`Deleting old global slash command: ${cmd.name}`);
         await rest.delete(Routes.applicationCommand(config.clientId, cmd.id));
       }
     }
 
     await rest.put(Routes.applicationCommands(config.clientId), { body: slashJSON });
-    console.log("Global slash commands registered successfully.");
   } catch (error) {
     console.error("Failed to update slash commands:", error);
   }
@@ -93,18 +100,15 @@ client.on("channelDelete", channel => {
 client.once("clientReady", async () => {
   try {
     let totalUsers = 0;
-    let totalChannels = 0;
 
     for (const guild of client.guilds.cache.values()) {
       totalUsers += guild.memberCount;
-      totalChannels += guild.channels.cache.size;
     }
 
     console.log("==========================");
     console.log(`Logged in as ${client.user.tag}`);
     console.log(`Serving in ${client.guilds.cache.size} servers`);
     console.log(`Watching over ${totalUsers} users`);
-    console.log(`Monitoring ${totalChannels} channels`);
     console.log("==========================");
 
     client.user.setPresence({
@@ -139,7 +143,7 @@ client.once("clientReady", async () => {
   }
 });
 
-// === Message Handler (Prefix + Fun Responses + Filters) ===
+// === Message Handler ===
 client.on("messageCreate", async message => {
   if (message.author.bot) return;
 
