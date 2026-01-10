@@ -190,7 +190,7 @@ client.on("messageCreate", async message => {
         .setColor("Red")
         .setTitle("🚨 Slur Detected!")
         .setDescription(`${message.author} watch your language!`)
-        .setImage("https://i.imgur.com/0bkSmUl.png")
+        .setImage("https://i.imgur.com/LQmggjY.png")
         .setTimestamp();
 
       return message.channel.send({ embeds: [embed] });
