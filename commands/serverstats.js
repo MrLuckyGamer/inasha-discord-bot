@@ -91,8 +91,13 @@ function saveStats() {
 
 // === GET BOT COUNT ===
 async function getBotCount(guild) {
-  await guild.members.fetch();
-  return guild.members.cache.filter(m => m.user.bot).size;
+  try {
+    await guild.members.fetch({ force: true });
+    return guild.members.cache.filter(m => m.user.bot).size;
+  } catch (error) {
+    console.error("Error fetching members for bot count:", error);
+    return 0;
+  }
 }
 
 // === UPDATE STATS ===
