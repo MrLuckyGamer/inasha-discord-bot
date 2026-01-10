@@ -26,12 +26,27 @@ client.slashCommands = new Collection();
 
 // === Load Prefix Commands ===
 const commandsPath = path.join(__dirname, "commands");
-if (fs.existsSync(commandsPath)) {
-  const commandFiles = fs.readdirSync(commandsPath).filter(f => f.endsWith(".js"));
-  for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
-    if (command?.name) client.commands.set(command.name, command);
+
+function loadCommands(dir) {
+  const files = fs.readdirSync(dir);
+  
+  for (const file of files) {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+    
+    if (stat.isDirectory()) {
+      loadCommands(filePath);
+    } else if (file.endsWith('.js')) {
+      const command = require(filePath);
+      if (command?.name) {
+        client.commands.set(command.name, command);
+      }
+    }
   }
+}
+
+if (fs.existsSync(commandsPath)) {
+  loadCommands(commandsPath);
 }
 
 // === Load Slash Commands ===
