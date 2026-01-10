@@ -3,7 +3,7 @@
 
 [![license](https://img.shields.io/badge/license-LICENSED-green.svg)](https://github.com/MrLuckyGamer/inasha-discord-bot/blob/main/LICENSE.md)
 
-Copyright (c) 2025 Lucky
+Copyright (c) 2026 Lucky
 
 All rights reserved.
 
