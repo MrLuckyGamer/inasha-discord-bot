@@ -89,12 +89,27 @@ function saveStats() {
   fs.writeFileSync(file, JSON.stringify(statsChannels, null, 2));
 }
 
+// === RATE LIMITER ===
+const fetchQueue = new Map();
+const FETCH_COOLDOWN = 5000; // 5 seconds between fetches per guild
+
 // === GET BOT COUNT ===
 async function getBotCount(guild) {
   try {
-    await guild.members.fetch({ force: true });
+    const lastFetch = fetchQueue.get(guild.id);
+    const now = Date.now();
+    
+    if (!lastFetch || now - lastFetch > FETCH_COOLDOWN) {
+      await guild.members.fetch({ force: true });
+      fetchQueue.set(guild.id, now);
+    }
+    
     return guild.members.cache.filter(m => m.user.bot).size;
   } catch (error) {
+    if (error.code === 'GatewayRateLimitError' || error.status === 429) {
+      console.log(`Rate limited for ${guild.name}, using cached member count`);
+      return guild.members.cache.filter(m => m.user.bot).size;
+    }
     console.error("Error fetching members for bot count:", error);
     return 0;
   }
