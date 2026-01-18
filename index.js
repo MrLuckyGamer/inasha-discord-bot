@@ -126,6 +126,8 @@ client.once("clientReady", async () => {
     if (fs.existsSync(statsFile)) {
       const statsData = JSON.parse(fs.readFileSync(statsFile, "utf8"));
       const guildIds = Object.keys(statsData);
+      
+      console.log(`Will update stats for ${guildIds.length} servers over the next ${Math.ceil(guildIds.length * 10 / 60)} minutes...`);
 
       for (let i = 0; i < guildIds.length; i++) {
         const guildId = guildIds[i];
@@ -133,7 +135,7 @@ client.once("clientReady", async () => {
         if (guild) {
           setTimeout(() => {
             updateStats(guild).catch(err => console.error(`Stats update error for ${guild.name}:`, err));
-          }, i * 2000);
+          }, i * 10000);
         }
       }
     }

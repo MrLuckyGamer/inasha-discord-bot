@@ -54,9 +54,12 @@ module.exports = {
       };
 
       saveStats();
-      await updateStats(message.guild);
 
-      return message.reply("Server stats have been enabled!");
+      updateStats(message.guild).catch(err => 
+        console.error(`Stats update error for ${message.guild.name}:`, err)
+      );
+
+      return message.reply("Server stats have been enabled! Stats will update shortly.");
     }
 
     // === DISABLE ===
@@ -89,29 +92,90 @@ function saveStats() {
   fs.writeFileSync(file, JSON.stringify(statsChannels, null, 2));
 }
 
-// === RATE LIMITER ===
-const fetchQueue = new Map();
-const FETCH_COOLDOWN = 5000; // 5 seconds between fetches per guild
+// === FETCH QUEUE SYSTEM ===
+class FetchQueue {
+  constructor() {
+    this.queue = [];
+    this.processing = false;
+    this.lastFetchTimes = new Map();
+    this.MIN_DELAY = 6000; // 6 seconds minimum between fetches
+  }
+
+  async add(guild) {
+    return new Promise((resolve) => {
+      this.queue.push({ guild, resolve });
+      this.process();
+    });
+  }
+
+  async process() {
+    if (this.processing || this.queue.length === 0) return;
+    
+    this.processing = true;
+
+    while (this.queue.length > 0) {
+      const { guild, resolve } = this.queue.shift();
+      
+      try {
+        const lastFetch = this.lastFetchTimes.get(guild.id);
+        const now = Date.now();
+        
+        if (lastFetch) {
+          const timeSince = now - lastFetch;
+          if (timeSince < this.MIN_DELAY) {
+            const waitTime = this.MIN_DELAY - timeSince;
+            console.log(`Waiting ${Math.ceil(waitTime / 1000)}s before fetching ${guild.name}`);
+            await new Promise(r => setTimeout(r, waitTime));
+          }
+        }
+
+        console.log(`Fetching members for ${guild.name}...`);
+        await guild.members.fetch({ force: true });
+        this.lastFetchTimes.set(guild.id, Date.now());
+        
+        const botCount = guild.members.cache.filter(m => m.user.bot).size;
+        resolve(botCount);
+
+        await new Promise(r => setTimeout(r, 1000));
+        
+      } catch (error) {
+        console.error(`Error fetching members for ${guild.name}:`, error);
+
+        if (error.code === 'GatewayRateLimitError' || error.status === 429) {
+          const retryAfter = (error.data?.retry_after || 5) * 1000;
+          console.log(`Rate limited! Waiting ${Math.ceil(retryAfter / 1000)}s before continuing...`);
+          await new Promise(r => setTimeout(r, retryAfter + 1000));
+
+          this.queue.unshift({ guild, resolve });
+        } else {
+          const botCount = guild.members.cache.filter(m => m.user.bot).size;
+          resolve(botCount);
+        }
+      }
+    }
+
+    this.processing = false;
+  }
+}
+
+const fetchQueue = new FetchQueue();
 
 // === GET BOT COUNT ===
 async function getBotCount(guild) {
   try {
-    const lastFetch = fetchQueue.get(guild.id);
-    const now = Date.now();
-    
-    if (!lastFetch || now - lastFetch > FETCH_COOLDOWN) {
-      await guild.members.fetch({ force: true });
-      fetchQueue.set(guild.id, now);
+    const cachedCount = guild.members.cache.filter(m => m.user.bot).size;
+
+    if (cachedCount > 0 && guild.members.cache.size > 10) {
+      console.log(`Using cached bot count for ${guild.name}: ${cachedCount}`);
+      return cachedCount;
     }
+
+    console.log(`Queuing member fetch for ${guild.name}`);
+    return await fetchQueue.add(guild);
     
-    return guild.members.cache.filter(m => m.user.bot).size;
   } catch (error) {
-    if (error.code === 'GatewayRateLimitError' || error.status === 429) {
-      console.log(`Rate limited for ${guild.name}, using cached member count`);
-      return guild.members.cache.filter(m => m.user.bot).size;
-    }
-    console.error("Error fetching members for bot count:", error);
-    return 0;
+    console.error(`Error in getBotCount for ${guild.name}:`, error);
+    return guild.members.cache.filter(m => m.user.bot).size;
   }
 }
 
@@ -120,25 +184,31 @@ async function updateStats(guild) {
   const data = statsChannels[guild.id];
   if (!data) return;
 
-  const bots = await getBotCount(guild).catch(() => 0);
-  const total = typeof guild.memberCount === "number" ? guild.memberCount : 0;
-  const users = Math.max(0, total - bots);
+  try {
+    const bots = await getBotCount(guild).catch(() => 0);
+    const total = typeof guild.memberCount === "number" ? guild.memberCount : 0;
+    const users = Math.max(0, total - bots);
 
-  const channels = guild.channels.cache.filter(ch => 
-    ch.type === ChannelType.GuildText || ch.type === ChannelType.GuildVoice
-  ).size;
+    const channels = guild.channels.cache.filter(ch => 
+      ch.type === ChannelType.GuildText || ch.type === ChannelType.GuildVoice
+    ).size;
 
-  const updateChannel = (id, name) => {
-    const ch = guild.channels.cache.get(id);
-    if (ch) ch.setName(name).catch(() => {});
-  };
+    const updateChannel = (id, name) => {
+      const ch = guild.channels.cache.get(id);
+      if (ch) ch.setName(name).catch(() => {});
+    };
 
-  updateChannel(data.users, `👥 Users: ${users}`);
-  updateChannel(data.bots, `🤖 Bots: ${bots}`);
-  updateChannel(data.channels, `💬 Channels: ${channels}`);
+    updateChannel(data.users, `👥 Users: ${users}`);
+    updateChannel(data.bots, `🤖 Bots: ${bots}`);
+    updateChannel(data.channels, `💬 Channels: ${channels}`);
 
-  const category = guild.channels.cache.get(data.category);
-  if (category) category.setPosition(0).catch(() => {});
+    const category = guild.channels.cache.get(data.category);
+    if (category) category.setPosition(0).catch(() => {});
+    
+    console.log(`Updated stats for ${guild.name}: ${users} users, ${bots} bots, ${channels} channels`);
+  } catch (error) {
+    console.error(`Error updating stats for ${guild.name}:`, error);
+  }
 }
 
 // === EXPORTS ===
