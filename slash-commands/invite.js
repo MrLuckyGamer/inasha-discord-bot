@@ -7,7 +7,7 @@ module.exports = {
 
   async execute(interaction, client) {
     const clientId = client.user.id;
-    const inviteUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=8&scope=bot`;
+    const inviteUrl = `https://inasha.luckydev.xyz`;
 
     const ownerId = "320407113887252482";
     const owner = await client.users.fetch(ownerId);
