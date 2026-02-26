@@ -205,7 +205,7 @@ async function updateStats(guild) {
     const category = guild.channels.cache.get(data.category);
     if (category) category.setPosition(0).catch(() => {});
     
-    console.log(`Updated stats for ${guild.name}: ${users} users, ${bots} bots, ${channels} channels`);
+    // console.log(`Updated stats for ${guild.name}: ${users} users, ${bots} bots, ${channels} channels`);
   } catch (error) {
     console.error(`Error updating stats for ${guild.name}:`, error);
   }
