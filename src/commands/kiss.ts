@@ -1,0 +1,38 @@
+import { EmbedBuilder, Message, Client } from "discord.js";
+import { PrefixCommand } from "../types";
+
+const kissGifs = [
+  "https://media.giphy.com/media/G3va31oEEnIkM/giphy.gif",
+  "https://media.giphy.com/media/FqBTvSNjNzeZG/giphy.gif",
+  "https://media.giphy.com/media/bGm9FuBCGg4SY/giphy.gif",
+  "https://media.giphy.com/media/nyGFcsP0kAobm/giphy.gif",
+  "https://media.giphy.com/media/ZRSGWtBJG4Tza/giphy.gif",
+  "https://media.giphy.com/media/KH1CTZtw1iP3W/giphy.gif",
+  "https://media.giphy.com/media/hnNyVPIXgLdle/giphy.gif",
+  "https://media.giphy.com/media/wOtkVwroA6yzK/giphy.gif"
+];
+
+const command: PrefixCommand = {
+  name: "kiss",
+  description: "Send a kiss to someone!",
+  category: "Fun",
+  async execute(message: Message, args: string[], client: Client): Promise<void> {
+    const user = message.mentions.users.first();
+    if (!user) {
+      await message.reply("Please mention someone to kiss!");
+      return;
+    }
+
+    const gif = kissGifs[Math.floor(Math.random() * kissGifs.length)];
+
+    const embed = new EmbedBuilder()
+      .setColor(6086089)
+      .setTitle(`${message.author.username} kissed ${user.username}! 😘`)
+      .setImage(gif)
+      .setTimestamp();
+
+    await message.channel.send({ embeds: [embed] });
+  },
+};
+
+export = command;
