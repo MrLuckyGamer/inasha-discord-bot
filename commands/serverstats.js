@@ -166,7 +166,7 @@ async function getBotCount(guild) {
     const cachedCount = guild.members.cache.filter(m => m.user.bot).size;
 
     if (cachedCount > 0 && guild.members.cache.size > 10) {
-      console.log(`Using cached bot count for ${guild.name}: ${cachedCount}`);
+      // console.log(`Using cached bot count for ${guild.name}: ${cachedCount}`);
       return cachedCount;
     }
 
