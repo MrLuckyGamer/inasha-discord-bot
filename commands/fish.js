@@ -1,11 +1,5 @@
-const fs = require("fs");
 const { EmbedBuilder } = require("discord.js");
-
-const fishFile = "./data/fish/fish.json";
-const cooldownFile = "./data/fish/fishCooldowns.json";
-
-let fishData = fs.existsSync(fishFile) ? JSON.parse(fs.readFileSync(fishFile)) : {};
-let cooldowns = fs.existsSync(cooldownFile) ? JSON.parse(fs.readFileSync(cooldownFile)) : {};
+const db = require("../database/db");
 
 const COOLDOWN = 1 * 60 * 60 * 1000; // 1 hour in milliseconds
 
@@ -36,41 +30,45 @@ module.exports = {
   description: "Go fishing and try to catch the most rare fish!",
   category: "Fun",
   async execute(message) {
-    const guildId = message.guild.id;
-    const userId = message.author.id;
-    const now = Date.now();
+    try {
+      const guildId = message.guild.id;
+      const userId = message.author.id;
+      const now = Date.now();
 
-    if (!cooldowns[guildId]) cooldowns[guildId] = {};
-    const lastFish = cooldowns[guildId][userId] || 0;
+      // Check cooldown
+      const lastFish = await db.getFishCooldown(guildId, userId);
 
-    if (now - lastFish < COOLDOWN) {
-      const remaining = COOLDOWN - (now - lastFish);
-      const hours = Math.floor(remaining / (1000 * 60 * 60));
-      const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
-      return message.reply(`⏳ You need to wait **${hours}h ${minutes}m ${seconds}s** before fishing again.`);
+      if (now - lastFish < COOLDOWN) {
+        const remaining = COOLDOWN - (now - lastFish);
+        const hours = Math.floor(remaining / (1000 * 60 * 60));
+        const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+        return message.reply(`⏳ You need to wait **${hours}h ${minutes}m ${seconds}s** before fishing again.`);
+      }
+
+      // Catch a fish
+      const caught = getRandomFish();
+      const points = getRandomPoints(caught.min, caught.max);
+
+      // Update fish data
+      await db.updateFishData(guildId, userId, points);
+      const totalPoints = await db.getFishData(guildId, userId);
+
+      // Set cooldown
+      await db.setFishCooldown(guildId, userId, now);
+
+      const embed = new EmbedBuilder()
+        .setTitle(`${message.author.username} went fishing! 🎣`)
+        .setDescription(
+          `You caught a **${caught.name}**!\nCoins Earned: **${points}**\nTotal Coins Earned: **${totalPoints}**`
+        )
+        .setColor(6086089)
+        .setTimestamp();
+
+      message.channel.send({ embeds: [embed] });
+    } catch (error) {
+      console.error('Error in fish command:', error);
+      message.reply("An error occurred while fishing. Please try again later.");
     }
-
-    const caught = getRandomFish();
-    const points = getRandomPoints(caught.min, caught.max);
-
-    if (!fishData[guildId]) fishData[guildId] = {};
-    if (!fishData[guildId][userId]) fishData[guildId][userId] = 0;
-    fishData[guildId][userId] += points;
-
-    fs.writeFileSync(fishFile, JSON.stringify(fishData, null, 2));
-
-    cooldowns[guildId][userId] = now;
-    fs.writeFileSync(cooldownFile, JSON.stringify(cooldowns, null, 2));
-
-    const embed = new EmbedBuilder()
-      .setTitle(`${message.author.username} went fishing! 🎣`)
-      .setDescription(
-        `You caught a **${caught.name}**!\nCoins Earned: **${points}**\nTotal Coins Earned: **${fishData[guildId][userId]}**`
-      )
-      .setColor(6086089)
-      .setTimestamp();
-
-    message.channel.send({ embeds: [embed] });
   },
 };

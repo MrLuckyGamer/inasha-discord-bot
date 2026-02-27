@@ -1,6 +1,7 @@
 const { Client, GatewayIntentBits, Collection, EmbedBuilder, REST, Routes, MessageFlags, Partials, } = require("discord.js");
 const fs = require("fs");
 const path = require("path");
+const db = require("./database/db");
 const config = {
   token: process.env.token,
   prefix: process.env.prefix,
@@ -99,6 +100,9 @@ client.on("channelDelete", channel => {
 // === Ready Event ===
 client.once("clientReady", async () => {
   try {
+    // Test database connection
+    await db.testConnection();
+
     let totalUsers = 0;
 
     for (const guild of client.guilds.cache.values()) {
@@ -122,16 +126,15 @@ client.once("clientReady", async () => {
       ],
     });
 
-    const statsFile = "./data/serverstats/serverstats.json";
-    if (fs.existsSync(statsFile)) {
-      const statsData = JSON.parse(fs.readFileSync(statsFile, "utf8"));
-      const guildIds = Object.keys(statsData);
-      
-      console.log(`Will update stats for ${guildIds.length} servers over the next ${Math.ceil(guildIds.length * 10 / 60)} minutes...`);
+    // Get all server stats from database
+    const allStats = await db.getAllServerStats();
+    
+    if (allStats.length > 0) {
+      console.log(`Will update stats for ${allStats.length} servers over the next ${Math.ceil(allStats.length * 10 / 60)} minutes...`);
 
-      for (let i = 0; i < guildIds.length; i++) {
-        const guildId = guildIds[i];
-        const guild = client.guilds.cache.get(guildId);
+      for (let i = 0; i < allStats.length; i++) {
+        const statsData = allStats[i];
+        const guild = client.guilds.cache.get(statsData.guild_id);
         if (guild) {
           setTimeout(() => {
             updateStats(guild).catch(err => console.error(`Stats update error for ${guild.name}:`, err));
