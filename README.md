@@ -31,16 +31,36 @@
 - `i>serverinfo` — Server info  
 - `i>serverstats` — Toggle server stat channels  
 - `i>uptime` — Uptime
+- `i>userinfo` — Display detailed user information
 
 **Moderation**
+- `i>addrole` — Add a role to a user
 - `i>ban` — Ban a user  
 - `i>kick` — Kick a user  
 - `i>lock` / `i>unlock` — Lock/unlock channel  
-- `i>purge` — Bulk delete messages  
+- `i>purge` — Bulk delete messages
+- `i>removerole` — Remove a role from a user
 - `i>warn` — Warn a user
 
+**Casino**
+- `i>balance` — Check your casino balance and stats
+- `i>roulette` — Play roulette (Red 1.5x, Black 2x, Green 15x)
+- `i>slots` — Play the slot machine (2x or 9x jackpot)
+
 **Fun**
-- `i>coinflip`, `i>family`, `i>fish`, `i>fishlb`, `i>freaky`, `i>gay`, `i>hug`, `i>kiss`, `i>roll`, `i>rtd`, `i>ship`, `i>slap`
+- `i>cat` — Random cat image
+- `i>coinflip` — Flip a coin
+- `i>family` — Family tree
+- `i>fish` — Go fishing
+- `i>fishlb` — Fishing leaderboard
+- `i>freaky` — Freaky meter
+- `i>gay` — Gay meter
+- `i>hug` — Hug someone
+- `i>kiss` — Kiss someone
+- `i>roll` — Roll a dice
+- `i>rtd` — Roll the dice
+- `i>ship` — Ship two users
+- `i>slap` — Slap someone
 
 ---
 
