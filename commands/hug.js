@@ -1,16 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-
-const hugGifs = [
-  "https://media.giphy.com/media/l2QDM9Jnim1YVILXa/giphy.gif",
-  "https://media.giphy.com/media/od5H3PmEG5EVq/giphy.gif",
-  "https://media.giphy.com/media/wnsgren9NtITS/giphy.gif",
-  "https://media.giphy.com/media/143v0Z4767T15e/giphy.gif",
-  "https://media.giphy.com/media/sUIZWMnfd4Mb6/giphy.gif",
-  "https://media.giphy.com/media/xT39CXg70nNS0MFNLy/giphy.gif",
-  "https://media.giphy.com/media/BXrwTdoho6hkQ/giphy.gif",
-  "https://media.giphy.com/media/lrr9rHuoJOE0w/giphy.gif",
-  "https://media.giphy.com/media/8tpiC1JAYVMFq/giphy.gif"
-];
+const https = require("https");
 
 module.exports = {
   name: "hug",
@@ -20,14 +9,38 @@ module.exports = {
     const user = message.mentions.users.first();
     if (!user) return message.reply("Please mention someone to hug!");
 
-    const gif = hugGifs[Math.floor(Math.random() * hugGifs.length)];
+    // Fetch a random hug GIF from Nekos.best API
+    const url = "https://nekos.best/api/v2/hug";
 
-    const embed = new EmbedBuilder()
-      .setColor(6086089)
-      .setTitle(`${message.author.username} hugged ${user.username}! 🤗`)
-      .setImage(gif)
-      .setTimestamp();
+    https.get(url, (res) => {
+      let data = "";
 
-    message.channel.send({ embeds: [embed] });
+      res.on("data", (chunk) => {
+        data += chunk;
+      });
+
+      res.on("end", () => {
+        try {
+          const json = JSON.parse(data);
+          if (json && json.results && json.results[0] && json.results[0].url) {
+            const embed = new EmbedBuilder()
+              .setColor(6086089)
+              .setTitle(`${message.author.username} hugged ${user.username}! 🤗`)
+              .setImage(json.results[0].url)
+              .setTimestamp();
+
+            message.channel.send({ embeds: [embed] });
+          } else {
+            message.channel.send("Couldn't fetch a hug GIF. Try again!");
+          }
+        } catch (error) {
+          console.error(error);
+          message.channel.send("Error fetching hug GIF!");
+        }
+      });
+    }).on("error", (error) => {
+      console.error(error);
+      message.channel.send("Failed to fetch hug GIF!");
+    });
   },
 };

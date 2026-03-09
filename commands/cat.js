@@ -20,7 +20,7 @@ module.exports = {
           const json = JSON.parse(data);
           if (json && json[0] && json[0].url) {
             const embed = new EmbedBuilder()
-              .setColor("#00ff00")
+              .setColor(6086089)
               .setTitle("🐱 Here is your random cat!")
               .setImage(json[0].url)
               .setTimestamp();

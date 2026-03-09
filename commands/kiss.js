@@ -1,15 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-
-const kissGifs = [
-  "https://media.giphy.com/media/G3va31oEEnIkM/giphy.gif",
-  "https://media.giphy.com/media/FqBTvSNjNzeZG/giphy.gif",
-  "https://media.giphy.com/media/bGm9FuBCGg4SY/giphy.gif",
-  "https://media.giphy.com/media/nyGFcsP0kAobm/giphy.gif",
-  "https://media.giphy.com/media/ZRSGWtBJG4Tza/giphy.gif",
-  "https://media.giphy.com/media/KH1CTZtw1iP3W/giphy.gif",
-  "https://media.giphy.com/media/hnNyVPIXgLdle/giphy.gif",
-  "https://media.giphy.com/media/wOtkVwroA6yzK/giphy.gif"
-];
+const https = require("https");
 
 module.exports = {
   name: "kiss",
@@ -19,14 +9,38 @@ module.exports = {
     const user = message.mentions.users.first();
     if (!user) return message.reply("Please mention someone to kiss!");
 
-    const gif = kissGifs[Math.floor(Math.random() * kissGifs.length)];
+    // Fetch a random kiss GIF from Nekos.best API
+    const url = "https://nekos.best/api/v2/kiss";
 
-    const embed = new EmbedBuilder()
-      .setColor(6086089)
-      .setTitle(`${message.author.username} kissed ${user.username}! 😘`)
-      .setImage(gif)
-      .setTimestamp();
+    https.get(url, (res) => {
+      let data = "";
 
-    message.channel.send({ embeds: [embed] });
+      res.on("data", (chunk) => {
+        data += chunk;
+      });
+
+      res.on("end", () => {
+        try {
+          const json = JSON.parse(data);
+          if (json && json.results && json.results[0] && json.results[0].url) {
+            const embed = new EmbedBuilder()
+              .setColor(6086089)
+              .setTitle(`${message.author.username} kissed ${user.username}! 😘`)
+              .setImage(json.results[0].url)
+              .setTimestamp();
+
+            message.channel.send({ embeds: [embed] });
+          } else {
+            message.channel.send("Couldn't fetch a kiss GIF. Try again!");
+          }
+        } catch (error) {
+          console.error(error);
+          message.channel.send("Error fetching kiss GIF!");
+        }
+      });
+    }).on("error", (error) => {
+      console.error(error);
+      message.channel.send("Failed to fetch kiss GIF!");
+    });
   },
 };
