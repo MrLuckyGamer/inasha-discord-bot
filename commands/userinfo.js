@@ -52,7 +52,7 @@ module.exports = {
       .join(", ");
 
     const embed = new EmbedBuilder()
-      .setColor(member.displayHexColor || "#5865F2")
+      .setColor(6086089)
       .setAuthor({ 
         name: `${user.tag}`, 
         iconURL: user.displayAvatarURL({ dynamic: true }) 
