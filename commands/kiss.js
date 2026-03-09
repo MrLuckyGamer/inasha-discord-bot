@@ -9,10 +9,17 @@ module.exports = {
     const user = message.mentions.users.first();
     if (!user) return message.reply("Please mention someone to kiss!");
 
-    // Fetch a random kiss GIF from Nekos.best API
-    const url = "https://nekos.best/api/v2/kiss";
+    // Use waifu.pics API
+    const options = {
+      hostname: 'api.waifu.pics',
+      path: '/sfw/kiss',
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    };
 
-    https.get(url, (res) => {
+    const req = https.request(options, (res) => {
       let data = "";
 
       res.on("data", (chunk) => {
@@ -22,11 +29,11 @@ module.exports = {
       res.on("end", () => {
         try {
           const json = JSON.parse(data);
-          if (json && json.results && json.results[0] && json.results[0].url) {
+          if (json && json.url) {
             const embed = new EmbedBuilder()
               .setColor(6086089)
               .setTitle(`${message.author.username} kissed ${user.username}! 😘`)
-              .setImage(json.results[0].url)
+              .setImage(json.url)
               .setTimestamp();
 
             message.channel.send({ embeds: [embed] });
@@ -34,13 +41,18 @@ module.exports = {
             message.channel.send("Couldn't fetch a kiss GIF. Try again!");
           }
         } catch (error) {
-          console.error(error);
+          console.error("Parse error:", error);
+          console.error("Response data:", data);
           message.channel.send("Error fetching kiss GIF!");
         }
       });
-    }).on("error", (error) => {
-      console.error(error);
+    });
+
+    req.on("error", (error) => {
+      console.error("Request error:", error);
       message.channel.send("Failed to fetch kiss GIF!");
     });
+
+    req.end();
   },
 };
