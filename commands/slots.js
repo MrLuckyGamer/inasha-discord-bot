@@ -1,69 +1,12 @@
-const fs = require("fs");
 const { EmbedBuilder } = require("discord.js");
+const {
+  getMoney,
+  addMoney,
+  subtractMoney,
+  updateSlotsStats,
+} = require("./casinoUtils");
 
 const slotItems = ["🍇", "🍉", "🍊", "🍎", "🍓", "🍓", "🍒"];
-const moneyFile = "./data/casino/money.json";
-const slotsFile = "./data/casino/slots.json";
-
-// Load or initialize data
-let moneyData = fs.existsSync(moneyFile) ? JSON.parse(fs.readFileSync(moneyFile)) : {};
-let slotsStats = fs.existsSync(slotsFile) ? JSON.parse(fs.readFileSync(slotsFile)) : {};
-
-function ensureDataDir() {
-  if (!fs.existsSync("./data")) fs.mkdirSync("./data");
-  if (!fs.existsSync("./data/casino")) fs.mkdirSync("./data/casino");
-}
-
-function saveData() {
-  ensureDataDir();
-  fs.writeFileSync(moneyFile, JSON.stringify(moneyData, null, 2));
-  fs.writeFileSync(slotsFile, JSON.stringify(slotsStats, null, 2));
-}
-
-function getMoney(guildId, userId) {
-  if (!moneyData[guildId]) moneyData[guildId] = {};
-  if (!moneyData[guildId][userId]) moneyData[guildId][userId] = 1000; // Starting balance
-  return moneyData[guildId][userId];
-}
-
-function addMoney(guildId, userId, amount) {
-  if (!moneyData[guildId]) moneyData[guildId] = {};
-  if (!moneyData[guildId][userId]) moneyData[guildId][userId] = 1000;
-  moneyData[guildId][userId] += amount;
-  saveData();
-}
-
-function subtractMoney(guildId, userId, amount) {
-  if (!moneyData[guildId]) moneyData[guildId] = {};
-  if (!moneyData[guildId][userId]) moneyData[guildId][userId] = 1000;
-  moneyData[guildId][userId] -= amount;
-  saveData();
-}
-
-function updateStats(guildId, userId, won, amount, type) {
-  if (!slotsStats[guildId]) slotsStats[guildId] = {};
-  if (!slotsStats[guildId][userId]) {
-    slotsStats[guildId][userId] = { 
-      wins: 0, 
-      losses: 0, 
-      totalWon: 0, 
-      totalLost: 0,
-      jackpots: 0,
-      doubles: 0
-    };
-  }
-  
-  if (won) {
-    slotsStats[guildId][userId].wins++;
-    slotsStats[guildId][userId].totalWon += amount;
-    if (type === "jackpot") slotsStats[guildId][userId].jackpots++;
-    if (type === "double") slotsStats[guildId][userId].doubles++;
-  } else {
-    slotsStats[guildId][userId].losses++;
-    slotsStats[guildId][userId].totalLost += amount;
-  }
-  saveData();
-}
 
 module.exports = {
   name: "slots",
@@ -80,7 +23,9 @@ module.exports = {
 
     const moneymore = new EmbedBuilder()
       .setColor("Red")
-      .setDescription(`You are betting more than you have!\nYour balance: **${currentMoney}** coins`);
+      .setDescription(
+        `You are betting more than you have!\nYour balance: **${currentMoney}** coins\nUse \`daily\` to claim free coins!`
+      );
 
     let money = parseInt(args[0]);
 
@@ -103,15 +48,16 @@ module.exports = {
     let multiplier = "0x";
     let winType = null;
 
-    // Check for jackpot (all 3 match)
     if (number[0] === number[1] && number[1] === number[2]) {
       winAmount = money * 9;
       multiplier = "9x";
       win = true;
       winType = "jackpot";
-    }
-    // Check for double (2 match)
-    else if (number[0] === number[1] || number[0] === number[2] || number[1] === number[2]) {
+    } else if (
+      number[0] === number[1] ||
+      number[0] === number[2] ||
+      number[1] === number[2]
+    ) {
       winAmount = money * 2;
       multiplier = "2x";
       win = true;
@@ -122,14 +68,20 @@ module.exports = {
 
     if (win) {
       addMoney(guildId, userId, winAmount);
-      updateStats(guildId, userId, true, winAmount, winType);
+      updateSlotsStats(guildId, userId, true, winAmount, winType);
 
       const winEmbed = new EmbedBuilder()
         .setColor("Gold")
         .setTitle("🎰 Slot Machine")
-        .setDescription(`**${slotDisplay}**\n\n${winType === "jackpot" ? "🎉 **JACKPOT!** 🎉" : "✨ **Match!** ✨"}\n\n You won **${winAmount}** coins!\nMultiplier: **${multiplier}**`)
+        .setDescription(
+          `**${slotDisplay}**\n\n${winType === "jackpot" ? "🎉 **JACKPOT!** 🎉" : "✨ **Match!** ✨"}\n\n You won **${winAmount}** coins!\nMultiplier: **${multiplier}**`
+        )
         .addFields(
-          { name: "💰 New Balance", value: `${getMoney(guildId, userId)} coins`, inline: true },
+          {
+            name: "💰 New Balance",
+            value: `${getMoney(guildId, userId)} coins`,
+            inline: true,
+          },
           { name: "📊 Bet", value: `${money} coins`, inline: true }
         )
         .setTimestamp();
@@ -137,14 +89,22 @@ module.exports = {
       message.channel.send({ embeds: [winEmbed] });
     } else {
       subtractMoney(guildId, userId, money);
-      updateStats(guildId, userId, false, money, null);
+      updateSlotsStats(guildId, userId, false, money, null);
+
+      const newBalance = getMoney(guildId, userId);
 
       const loseEmbed = new EmbedBuilder()
         .setColor("DarkRed")
         .setTitle("🎰 Slot Machine")
-        .setDescription(`**${slotDisplay}**\n\n You lost **${money}** coins!\nMultiplier: **0x**`)
+        .setDescription(
+          `**${slotDisplay}**\n\n You lost **${money}** coins!\nMultiplier: **0x**`
+        )
         .addFields(
-          { name: "💰 New Balance", value: `${getMoney(guildId, userId)} coins`, inline: true },
+          {
+            name: "💰 New Balance",
+            value: `${newBalance} coins${newBalance === 0 ? "\n*(Use `daily` to get more coins!)*" : ""}`,
+            inline: true,
+          },
           { name: "📊 Bet", value: `${money} coins`, inline: true }
         )
         .setTimestamp();
