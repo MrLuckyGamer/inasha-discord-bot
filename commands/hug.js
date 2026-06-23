@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-const https = require("https");
+const { fetchNekosBest } = require("../utils/nekosBest");
 
 module.exports = {
   name: "hug",
@@ -9,50 +9,19 @@ module.exports = {
     const user = message.mentions.users.first();
     if (!user) return message.reply("Please mention someone to hug!");
 
-    // Use waifu.pics API
-    const options = {
-      hostname: 'api.waifu.pics',
-      path: '/sfw/hug',
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    };
+    try {
+      const { url } = await fetchNekosBest("hug");
 
-    const req = https.request(options, (res) => {
-      let data = "";
+      const embed = new EmbedBuilder()
+        .setColor(6086089)
+        .setTitle(`${message.author.username} hugged ${user.username}! 🤗`)
+        .setImage(url)
+        .setTimestamp();
 
-      res.on("data", (chunk) => {
-        data += chunk;
-      });
-
-      res.on("end", () => {
-        try {
-          const json = JSON.parse(data);
-          if (json && json.url) {
-            const embed = new EmbedBuilder()
-              .setColor(6086089)
-              .setTitle(`${message.author.username} hugged ${user.username}! 🤗`)
-              .setImage(json.url)
-              .setTimestamp();
-
-            message.channel.send({ embeds: [embed] });
-          } else {
-            message.channel.send("Couldn't fetch a hug GIF. Try again!");
-          }
-        } catch (error) {
-          console.error("Parse error:", error);
-          console.error("Response data:", data);
-          message.channel.send("Error fetching hug GIF!");
-        }
-      });
-    });
-
-    req.on("error", (error) => {
-      console.error("Request error:", error);
+      message.channel.send({ embeds: [embed] });
+    } catch (error) {
+      console.error("Failed to fetch hug GIF:", error);
       message.channel.send("Failed to fetch hug GIF!");
-    });
-
-    req.end();
+    }
   },
 };
