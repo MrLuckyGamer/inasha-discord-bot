@@ -73,7 +73,7 @@ module.exports = {
     let resultEmbed;
 
     if (random === 0 && colorChoice === 2) {
-      winAmount = money * 15;
+      winAmount = money * 14;
       multiplier = "15x";
       won = true;
       addMoney(guildId, userId, winAmount);
@@ -92,7 +92,7 @@ module.exports = {
         })
         .setTimestamp();
     } else if (isOdd(random) && colorChoice === 1) {
-      winAmount = Math.floor(money * 1.5);
+      winAmount = Math.floor(money * 0.5);
       multiplier = "1.5x";
       won = true;
       addMoney(guildId, userId, winAmount);
@@ -111,7 +111,7 @@ module.exports = {
         })
         .setTimestamp();
     } else if (!isOdd(random) && random !== 0 && colorChoice === 0) {
-      winAmount = money * 2;
+      winAmount = money;
       multiplier = "2x";
       won = true;
       addMoney(guildId, userId, winAmount);

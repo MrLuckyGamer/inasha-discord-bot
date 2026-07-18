@@ -49,7 +49,7 @@ module.exports = {
     let winType = null;
 
     if (number[0] === number[1] && number[1] === number[2]) {
-      winAmount = money * 9;
+      winAmount = money * 8;
       multiplier = "9x";
       win = true;
       winType = "jackpot";
@@ -58,7 +58,7 @@ module.exports = {
       number[0] === number[2] ||
       number[1] === number[2]
     ) {
-      winAmount = money * 2;
+      winAmount = money;
       multiplier = "2x";
       win = true;
       winType = "double";
