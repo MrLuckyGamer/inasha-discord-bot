@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require("discord.js");
-const { fetchNekosBest } = require("../utils/nekosBest");
+const { fetchOtakuGif } = require("../utils/otakuGifs");
 
 module.exports = {
   name: "slap",
@@ -10,7 +10,7 @@ module.exports = {
     if (!user) return message.reply("Please mention someone to slap!");
 
     try {
-      const { url } = await fetchNekosBest("slap");
+      const { url } = await fetchOtakuGif("slap");
 
       const embed = new EmbedBuilder()
         .setColor(6086089)
