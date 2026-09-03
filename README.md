@@ -48,6 +48,7 @@
 
 **Casino**
 - `i>balance` — Check your casino balance and stats
+- `i>daily` — Claim 500 free coins every 24 hours
 - `i>roulette` — Play roulette (Red 1.5x, Black 2x, Green 15x)
 - `i>slots` — Play the slot machine (2x or 9x jackpot)
 
@@ -154,7 +155,7 @@ You can also containerise the bot using Docker with environment variables passed
 ---
 
 ## Slash Commands / Command Registration
-The bot includes code to register global slash commands via the Discord REST API (`discord.js` REST + `Routes.applicationCommands`). On startup the bot:
+Currently only `/invite` and `/ping` are implemented as slash commands (in `/slash-commands/`); every other command above is prefix-only (`i>`). The bot includes code to register global slash commands via the Discord REST API (`discord.js` REST + `Routes.applicationCommands`). On startup the bot:
 - collects slash command definitions from `/slash-commands/`,
 - constructs `slashJSON`,
 - fetches existing global commands and deletes any global commands that are not present in the current `slashJSON`,
@@ -239,6 +240,7 @@ git push origin feature/your-feature
 - `utils/autoresponseStore.js` — per-server enable/disable persistence for auto-responses.
 - `utils/countingStore.js` — per-server counting channel + count persistence.
 - `utils/parseNumber.js` — parses digits and spelled-out numbers ("forty two") for the counting game.
+- `commands/casinoUtils.js` — shared balance/roulette/slots/daily persistence used by `balance`, `daily`, `roulette`, and `slots`.
 - `package.json` lists `discord.js` `^14.15.3` and `node` engine `>=18`.
 
 ## Data Storage
@@ -247,6 +249,10 @@ Persistent data is stored as JSON files in `./data/` (created automatically on f
 - `data/serverstats/` - stat channel IDs
 - `data/autoresponses/` - per-server cat/dog auto-response toggles
 - `data/counting/` - per-server counting channel + current count
+- `data/casino/` - per-server balances (`money.json`, starting balance 1000 coins), daily-claim cooldowns (`daily.json`, 500 coins every 24h), and roulette/slots stats (`roulette.json`, `slots.json`)
+- `data/familytree/` - the `family` command's parent/child/sibling relationships
+- `data/fish/` - fishing catches (for `fishlb`) and per-user fishing cooldowns
+- `data/warns/` - moderation warnings issued with `warn`
 
 ---
 
