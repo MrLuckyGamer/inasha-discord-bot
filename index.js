@@ -193,7 +193,20 @@ client.on("messageCreate", async message => {
       if (parsed !== null) {
         const expected = counting.count + 1;
 
-        if (parsed === expected) {
+        if (parsed === expected && message.author.id === counting.lastUserId) {
+          try {
+            await message.react("🚫");
+          } catch (err) {
+            console.error("Failed to react to counting message:", err);
+          }
+          try {
+            await message.reply(
+              `🚫 You can't count twice in a row! Let someone else go next.`
+            );
+          } catch (err) {
+            console.error("Failed to send counting reset reply:", err);
+          }
+        } else if (parsed === expected) {
           setCount(message.guild.id, expected, message.author.id);
           try {
             await message.react("✅");
