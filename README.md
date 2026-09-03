@@ -10,11 +10,13 @@
 ---
 
 ## Features
-- Utility commands (avatar, botinfo, help, invite, ping, serverinfo, serverstats, uptime)  
-- Moderation commands (ban, kick, lock, unlock, purge, warn)  
+- Utility commands (avatar, botinfo, help, invite, ping, serverinfo, serverstats, uptime, userinfo)  
+- Moderation commands (addrole, ban, kick, lock, unlock, purge, removerole, warn)  
+- Casino commands (balance, daily, roulette, slots)
 - Fun commands (coinflip, family, fish, fishlb, freaky, gay, hug, kiss, roll, rtd, ship, slap)  
 - Automatic server statistics (members/channels) with periodic updates  
-- Auto-responses for messages containing "meow" and dog words ("woof", "bark", etc.)  
+- Toggleable auto-responses for messages containing "meow" and dog words ("woof", "bark", etc.), enabled by default and switchable per-server with `autoresponse`
+- Counting game: turns a channel into a collaborative counting game, toggleable per-server with `counting`
 - Slash command support + automatic global slash command registration/cleanup  
 - Logs guild add/remove events to console  
 - Configurable via environment variables (recommended) or `config.json`
@@ -32,6 +34,8 @@
 - `i>serverstats` — Toggle server stat channels  
 - `i>uptime` — Uptime
 - `i>userinfo` — Display detailed user information
+- `i>autoresponse` — Enable/disable the cat/dog chat auto-replies (aliases: `ar`, `autoreply`)
+- `i>counting` — Enable/disable the counting game in a channel (alias: `count`)
 
 **Moderation**
 - `i>addrole` — Add a role to a user
@@ -160,6 +164,48 @@ The bot includes code to register global slash commands via the Discord REST API
 
 ---
 
+## Auto-Responses
+
+The bot responds automatically to messages containing:
+- `meow` - cat reply 🐱
+- `woof`, `bark`, `bork`, `ruff`, `arf` - dog reply 🐶
+
+Both are **on by default** and can be toggled per-server with the `autoresponse` command
+(requires **Manage Server** permission):
+
+```
+i>autoresponse            # show status of all auto-responses
+i>autoresponse cat off    # disable cat replies in this server
+i>autoresponse dog on     # re-enable dog replies in this server
+```
+
+`ar` and `autoreply` also work as aliases. To add a new auto-response type (e.g. a
+`fox` reply), add an entry to `utils/autoresponses.js` - no other code changes needed.
+
+## Counting Game
+
+Turns a channel into a collaborative counting game: members count upward one message at a
+time, and the bot reacts to every attempt.
+
+- ✅ reaction + the count advances, when a message is the correct next number.
+- ❌ reaction + a reply naming the expected number, when it's wrong - and the count resets
+  back to **1**.
+- Numbers can be typed as digits (`42`) or spelled out in English (`forty two`,
+  `forty-two`, `one hundred and one`, `two thousand twenty four`, ...). Any other message in
+  the channel (regular chat, emoji, etc.) is ignored.
+
+Off by default; toggle per-server with the `counting` command (requires **Manage Server**
+permission):
+
+```
+i>counting enable     # turn on counting in the current channel (starts at 1)
+i>counting status      # show whether it's on, which channel, and the next number
+i>counting disable     # turn it off
+```
+
+`count` also works as an alias. Only one counting channel is active per server at a time -
+running `counting enable` in a different channel moves the game (and resets the count) there.
+
 ## Server Statistics
 - The bot updates server stats on `guildMemberAdd`, `guildMemberRemove`, `channelCreate`, `channelDelete`, and runs a periodic update every 10 minutes.
 - Server stats are persisted in `./data/serverstats/serverstats.json` (ensure `data/serverstats/` exists and is writeable).
@@ -185,11 +231,22 @@ git push origin feature/your-feature
 ---
 
 ## File / Code notes (based on your repo)
-- `index.js` — main entry, sets up client, loads command files, registers slash commands, event listeners, presence, and periodic stats update. Configured to read from environment variables for production deployment.
+- `index.js` — main entry, sets up client, loads command files (and their aliases), registers slash commands, event listeners, presence, the counting game, toggleable auto-responses, and periodic stats update. Configured to read from environment variables for production deployment.
 - `commands/` — prefix command files loaded as `client.commands`.
 - `slash-commands/` — slash command modules loaded into `client.slashCommands` and registered via REST.
 - `./commands/serverstats.js` (or similar) — contains `updateStats(guild)` used to create/update stat channels.
+- `utils/autoresponses.js` — registry of auto-response triggers/replies (cat, dog, ...).
+- `utils/autoresponseStore.js` — per-server enable/disable persistence for auto-responses.
+- `utils/countingStore.js` — per-server counting channel + count persistence.
+- `utils/parseNumber.js` — parses digits and spelled-out numbers ("forty two") for the counting game.
 - `package.json` lists `discord.js` `^14.15.3` and `node` engine `>=18`.
+
+## Data Storage
+
+Persistent data is stored as JSON files in `./data/` (created automatically on first run):
+- `data/serverstats/` - stat channel IDs
+- `data/autoresponses/` - per-server cat/dog auto-response toggles
+- `data/counting/` - per-server counting channel + current count
 
 ---
 

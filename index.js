@@ -8,6 +8,10 @@ const config = {
   guildId: process.env.guildId
 };
 const { updateStats } = require("./commands/serverstats.js");
+const { autoresponses } = require("./utils/autoresponses.js");
+const { isEnabled: isAutoresponseEnabled } = require("./utils/autoresponseStore.js");
+const { getCounting, setCount } = require("./utils/countingStore.js");
+const { parseCountingNumber } = require("./utils/parseNumber.js");
 
 const client = new Client({
   intents: [
@@ -37,6 +41,9 @@ function loadCommands(dir) {
       const command = require(filePath);
       if (command?.name) {
         client.commands.set(command.name, command);
+        for (const alias of command.aliases ?? []) {
+          client.commands.set(alias, command);
+        }
       }
     }
   }
@@ -170,25 +177,57 @@ client.on("messageCreate", async message => {
         message.reply("There was an error executing that command.");
       }
     }
+    return;
   }
 
-  // === Fun Cat Responses ===
-  if (lower.includes("meow")) {
-    const responses = [
-      "Meow! 🐱", "😺 Meow meow!", "Mew~", "Purr~ 😻", "Nya~ ✨",
-      "*eepy meow...* 💤", "MEOW!!", "🐾 *pounces on you* meow!"
-    ];
-    return message.channel.send(responses[Math.floor(Math.random() * responses.length)]);
+  // === Counting channel (toggleable per server) ===
+  if (message.guild) {
+    const counting = getCounting(message.guild.id);
+    if (counting && message.channel.id === counting.channelId) {
+      const trimmed = message.content.trim();
+
+      // Accepts plain digits ("42") and spelled-out numbers ("forty two").
+      // Anything else (chat, emoji, etc.) in the channel is left alone.
+      const parsed = parseCountingNumber(trimmed);
+
+      if (parsed !== null) {
+        const expected = counting.count + 1;
+
+        if (parsed === expected) {
+          setCount(message.guild.id, expected, message.author.id);
+          try {
+            await message.react("✅");
+          } catch (err) {
+            console.error("Failed to react to counting message:", err);
+          }
+        } else {
+          setCount(message.guild.id, 0, null);
+          try {
+            await message.react("❌");
+          } catch (err) {
+            console.error("Failed to react to counting message:", err);
+          }
+          try {
+            await message.reply(
+              `❌ Wrong number! I was expecting **${expected}**. The count has been reset — start again from **1**.`
+            );
+          } catch (err) {
+            console.error("Failed to send counting reset reply:", err);
+          }
+        }
+      }
+
+      return;
+    }
   }
 
-  // === Dog Responses ===
-  const dogWords = ["woof", "bark", "bork", "ruff", "arf"];
-  if (dogWords.some(word => lower.includes(word))) {
-    const responses = [
-      "Woof! 🐶", "Bark bark! 🐾", "bork bork!", "Ruff~ 🐕",
-      "*wags tail excitedly*", "🐶 *gives you a slobbery kiss*"
-    ];
-    return message.channel.send(responses[Math.floor(Math.random() * responses.length)]);
+  // === Chat auto-responses (cat/dog etc., toggleable per server) ===
+  for (const [type, entry] of Object.entries(autoresponses)) {
+    if (!entry.triggers.some(word => lower.includes(word))) continue;
+    if (!message.guild || !isAutoresponseEnabled(message.guild.id, type)) break;
+
+    const replies = entry.replies;
+    return message.reply(replies[Math.floor(Math.random() * replies.length)]);
   }
 
   // === Guild-only Slur Filter ===

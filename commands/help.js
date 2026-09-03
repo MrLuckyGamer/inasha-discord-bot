@@ -9,7 +9,10 @@ module.exports = {
     const client = message.client;
 
     const categories = {};
+    const seen = new Set();
     client.commands.forEach(cmd => {
+      if (seen.has(cmd.name)) return; // avoid listing a command once per alias
+      seen.add(cmd.name);
       const category = cmd.category || "Uncategorized";
       if (!categories[category]) categories[category] = [];
       categories[category].push(`\`${prefix}${cmd.name}\` - ${cmd.description}`);
